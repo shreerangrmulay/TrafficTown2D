@@ -1,0 +1,29 @@
+{
+  "levelId": "level1",
+  "levelName": "Safe Road Crossing",
+  "difficulty": "easy",
+  "objective": "Cross the road safely.",
+  "initialScore": 100,
+  "trafficLight": { "redSeconds": 5, "yellowSeconds": 2, "greenSeconds": 5 },
+  "vehicleSpawnInterval": 3,
+  "vehicleSpeed": 2.5,
+  "rewards": {
+    "waitForWalk": 10,
+    "useCrossing": 20,
+    "reachSidewalk": 30,
+    "unsafeCrossing": -20,
+    "vehicleCollision": -50
+  },
+  "missions": [
+    {
+      "missionId": "cross_at_zebra",
+      "description": "Find the zebra crossing before crossing the road.",
+      "trafficRule": {
+        "ruleId": "zebra_crossing",
+        "title": "Use a zebra crossing",
+        "description": "Cross at a marked crossing and look both ways first."
+      },
+      "reward": 10
+    }
+  ]
+}
