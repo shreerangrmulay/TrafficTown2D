@@ -24,6 +24,10 @@ namespace TrafficTown2D.UI
         [SerializeField] private SceneLoader sceneLoader;
 
         private Coroutine completionRoutine;
+        private bool isLevel2;
+        private bool stoppedAtStopSign;
+        private bool checkedBothDirections;
+        private bool crossedSafely;
 
         private void Awake()
         {
@@ -38,7 +42,27 @@ namespace TrafficTown2D.UI
         private void Start()
         {
             GameManager.Instance?.SetState(GameState.Playing);
-            if (objectiveText != null) objectiveText.text = "Cross the road safely";
+            isLevel2 = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == SceneLoader.SecondLevelSceneName;
+            if (objectiveText != null)
+            {
+                if (isLevel2)
+                {
+                    PrepareLevel2MissionCard();
+                    UpdateLevel2Objectives(false, false, false);
+                }
+                else
+                {
+                    objectiveText.text = "Cross the road safely";
+                }
+            }
+
+            if (backButton != null)
+            {
+                backButton.onClick.RemoveListener(BackToMenu);
+                backButton.onClick.AddListener(BackToMenu);
+                RenameBackButton();
+            }
+
             HideCompletion();
             UpdateScore(scoreManager != null ? scoreManager.CurrentScore : 0);
         }
@@ -57,31 +81,94 @@ namespace TrafficTown2D.UI
                 if (mistakesText != null) mistakesText.text = scoreManager.Mistakes.ToString();
 
                 int starCount = scoreManager.Mistakes == 0 ? 5 : scoreManager.Mistakes < 3 ? 4 : 3;
-                if (ratingStarsText != null) ratingStarsText.text = new string('★', starCount);
+                if (ratingStarsText != null) ratingStarsText.text = starCount + "/5";
                 if (ratingText != null) ratingText.text = starCount == 5 ? "Excellent!" : "Great effort!";
             }
 
             if (completionPanel == null) return;
 
             completionPanel.SetActive(true);
+            completionPanel.transform.SetAsLastSibling();
             if (completionRoutine != null) StopCoroutine(completionRoutine);
             completionRoutine = StartCoroutine(AnimateCompletion());
         }
 
+        public void UpdateLevel2Objectives(bool stopped, bool lookedBothWays, bool crossed)
+        {
+            if (!isLevel2 || objectiveText == null) return;
+
+            stoppedAtStopSign = stoppedAtStopSign || stopped;
+            checkedBothDirections = checkedBothDirections || lookedBothWays;
+            crossedSafely = crossedSafely || crossed;
+
+            objectiveText.text =
+                "Smart Crossing\n" +
+                FormatObjective(stoppedAtStopSign, "Stop at STOP sign") + "\n" +
+                FormatObjective(checkedBothDirections, "Look both ways") + "\n" +
+                FormatObjective(crossedSafely, "Cross safely");
+        }
+
         public void BackToMenu()
         {
+            Time.timeScale = 1f;
             if (sceneLoader != null)
             {
                 sceneLoader.LoadMainMenu();
                 return;
             }
 
-            SceneLoader.Instance?.LoadMainMenu();
+            if (SceneLoader.Instance != null)
+            {
+                SceneLoader.Instance.LoadMainMenu();
+                return;
+            }
+
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
         }
 
         private void UpdateScore(int score)
         {
             if (scoreText != null) scoreText.text = score.ToString();
+        }
+
+        private void PrepareLevel2MissionCard()
+        {
+            RectTransform objectiveRect = objectiveText.GetComponent<RectTransform>();
+            RectTransform missionCard = objectiveText.transform.parent as RectTransform;
+            if (missionCard != null)
+            {
+                missionCard.anchorMin = new Vector2(0f, 1f);
+                missionCard.anchorMax = new Vector2(0f, 1f);
+                missionCard.anchoredPosition = new Vector2(180f, -78f);
+                missionCard.sizeDelta = new Vector2(320f, 128f);
+            }
+
+            if (objectiveRect != null)
+            {
+                objectiveRect.anchorMin = new Vector2(0f, 0.5f);
+                objectiveRect.anchorMax = new Vector2(0f, 0.5f);
+                objectiveRect.anchoredPosition = new Vector2(12f, -18f);
+                objectiveRect.sizeDelta = new Vector2(292f, 86f);
+            }
+
+            objectiveText.fontSize = 12.5f;
+            objectiveText.alignment = TextAlignmentOptions.Left;
+            objectiveText.enableWordWrapping = true;
+        }
+
+        private void RenameBackButton()
+        {
+            TMP_Text[] labels = backButton.GetComponentsInChildren<TMP_Text>(true);
+            for (int index = 0; index < labels.Length; index++)
+            {
+                labels[index].text = "BACK TO MAIN MENU";
+                labels[index].fontSize = Mathf.Min(labels[index].fontSize, 15f);
+            }
+        }
+
+        private static string FormatObjective(bool done, string label)
+        {
+            return (done ? "[x] " : "[ ] ") + label;
         }
 
         private void HideCompletion()

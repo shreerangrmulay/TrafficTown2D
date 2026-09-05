@@ -5,6 +5,8 @@ namespace TrafficTown2D.UI
 {
     public sealed class FeedbackController : MonoBehaviour
     {
+        [SerializeField] private GameObject bannerPanel;
+        [SerializeField] private TMP_Text messageText;
         [SerializeField] private TMP_Text iconText;
         [SerializeField] private TMP_Text feedbackText;
         [SerializeField] private CanvasGroup canvasGroup;
@@ -12,12 +14,15 @@ namespace TrafficTown2D.UI
         [SerializeField] private float fadeSeconds = 0.18f;
 
         private Coroutine feedbackRoutine;
+        private GameObject targetPanel;
+        private TMP_Text targetText;
 
         public void Show(string message)
         {
-            if (feedbackText == null) return;
+            ResolveReferences();
+            if (targetText == null) return;
 
-            gameObject.SetActive(true);
+            targetPanel.SetActive(true);
             if (feedbackRoutine != null) StopCoroutine(feedbackRoutine);
 
             bool warning = IsWarning(message);
@@ -27,13 +32,13 @@ namespace TrafficTown2D.UI
                 iconText.color = warning ? new Color(0.92f, 0.45f, 0.18f, 1f) : new Color(0.18f, 0.67f, 0.32f, 1f);
             }
 
-            feedbackText.text = message;
+            targetText.text = message;
             feedbackRoutine = StartCoroutine(ShowRoutine());
         }
 
         private void Awake()
         {
-            if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
+            ResolveReferences();
             if (canvasGroup != null)
             {
                 canvasGroup.alpha = 0f;
@@ -41,7 +46,20 @@ namespace TrafficTown2D.UI
                 canvasGroup.blocksRaycasts = false;
             }
 
-            gameObject.SetActive(false);
+            if (targetText != null)
+            {
+                targetPanel.SetActive(false);
+            }
+        }
+
+        private void ResolveReferences()
+        {
+            targetPanel = bannerPanel != null ? bannerPanel : gameObject;
+            targetText = messageText != null ? messageText : feedbackText;
+            if (canvasGroup == null)
+            {
+                canvasGroup = targetPanel.GetComponent<CanvasGroup>();
+            }
         }
 
         private System.Collections.IEnumerator ShowRoutine()
@@ -50,7 +68,7 @@ namespace TrafficTown2D.UI
             yield return new WaitForSecondsRealtime(visibleSeconds);
             yield return FadeTo(0f);
             feedbackRoutine = null;
-            gameObject.SetActive(false);
+            targetPanel.SetActive(false);
         }
 
         private System.Collections.IEnumerator FadeTo(float targetAlpha)

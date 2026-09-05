@@ -103,7 +103,7 @@ namespace TrafficTown2D.Editor
 
         private static void EnsureBuildSettingsScenes()
         {
-            string[] requiredScenePaths = { "Assets/Scenes/MainMenu.unity", "Assets/Scenes/Level1.unity" };
+            string[] requiredScenePaths = { "Assets/Scenes/MainMenu.unity", "Assets/Scenes/Level1.unity", "Assets/Scenes/Level2.unity" };
             EditorBuildSettingsScene[] currentScenes = EditorBuildSettings.scenes;
             var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(currentScenes);
 

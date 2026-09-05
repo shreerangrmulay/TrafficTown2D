@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEditor.Events;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -15,6 +16,7 @@ using TrafficTown2D.Gameplay;
 using TrafficTown2D.Player;
 using TrafficTown2D.Traffic;
 using TrafficTown2D.UI;
+using TrafficTown2D.Visuals;
 
 namespace TrafficTown2D.Editor
 {
@@ -26,6 +28,18 @@ namespace TrafficTown2D.Editor
         private const string TrafficLightBodySpritePath = "Assets/Sprites/TrafficLightBody.png";
         private const string TrafficLightLensSpritePath = "Assets/Sprites/TrafficLightLens.png";
         private const string RoundedPanelSpritePath = "Assets/UI/RoundedPanel.png";
+        private const string PlayerIdleClipPath = "Assets/Animations/Player/PlayerIdle.anim";
+        private const string PlayerWalkClipPath = "Assets/Animations/Player/PlayerWalk.anim";
+        private const string PlayerAnimatorPath = "Assets/Animations/Player/Player.controller";
+        private const string PlayerPrefabPath = "Assets/Prefabs/Player.prefab";
+        private const string VehiclePrefabPath = "Assets/Prefabs/Vehicle.prefab";
+        private const string CarBluePrefabPath = "Assets/Prefabs/CarBlue.prefab";
+        private const string CarRedPrefabPath = "Assets/Prefabs/CarRed.prefab";
+        private const string CarYellowPrefabPath = "Assets/Prefabs/CarYellow.prefab";
+        private const string TrafficLightPrefabPath = "Assets/Prefabs/TrafficLight.prefab";
+        private const string PedestrianSignalPrefabPath = "Assets/Prefabs/PedestrianSignal.prefab";
+        private const string CrossingSignPrefabPath = "Assets/Prefabs/PedestrianCrossingSign.prefab";
+        private const string StreetLampPrefabPath = "Assets/Prefabs/StreetLamp.prefab";
         private static readonly Color RoadColor = new Color(0.10f, 0.11f, 0.13f, 1f);
         private static readonly Color RoadEdgeColor = new Color(0.92f, 0.88f, 0.62f, 1f);
         private static readonly Color LaneMarkColor = new Color(1f, 0.94f, 0.45f, 1f);
@@ -56,6 +70,7 @@ namespace TrafficTown2D.Editor
                 return;
             }
 
+            EnsureAssetFolders();
             EnsureCamera();
             EnsureGlobalLight();
             GameObject environment = FindOrCreate("Environment");
@@ -67,10 +82,13 @@ namespace TrafficTown2D.Editor
             GameObject traffic = FindOrCreate("Traffic");
             TrafficLightController light = CreateTrafficLight(traffic.transform);
             PedestrianSignalController pedestrian = CreatePedestrianSignal(traffic.transform, light);
-            VehicleController prefab = CreateVehiclePrefab(light);
+            VehicleController bluePrefab;
+            VehicleController redPrefab;
+            VehicleController yellowPrefab;
+            CreateVehiclePrefabs(light, out bluePrefab, out redPrefab, out yellowPrefab);
             Transform spawn = CreateVisual(traffic.transform, "CarSpawnPoint", new Vector3(8f, -1.2f, 0f), new Vector3(0.2f, 0.2f, 0.2f), Color.clear).transform;
             VehicleSpawner spawner = GetOrAdd(FindOrCreateChild(traffic.transform, "Cars"), typeof(VehicleSpawner)) as VehicleSpawner;
-            SetReference(spawner, "vehiclePrefab", prefab);
+            SetReference(spawner, "vehiclePrefab", bluePrefab);
             SetReference(spawner, "spawnPoint", spawn);
             SetReference(spawner, "trafficLight", light);
             Transform carStopPoint = CreateVisual(traffic.transform, "CarStopPoint", new Vector3(2.8f, -1.2f, -0.1f), new Vector3(0.15f, 0.15f, 0.15f), Color.clear).transform;
@@ -81,7 +99,7 @@ namespace TrafficTown2D.Editor
             SetInt(spawner, "maximumActiveVehicles", 4);
             SetFloat(spawner, "vehicleSpeed", 2.5f);
             SetFloat(spawner, "stoppingPoint", 2.8f);
-            CreateInitialCars(traffic.transform, prefab);
+            CreateInitialCars(traffic.transform, bluePrefab, redPrefab, yellowPrefab);
 
             ScoreManager score = GetOrAdd(FindOrCreateChild(FindOrCreate("Gameplay").transform, "ScoreManager"), typeof(ScoreManager)) as ScoreManager;
             CrossingZone crossing = GetOrAdd(FindOrCreateChild(environment.transform, "ZebraCrossing"), typeof(CrossingZone)) as CrossingZone;
@@ -99,7 +117,16 @@ namespace TrafficTown2D.Editor
             SetReference(safety, "levelUI", ui);
             if (safeZoneObject == null) Debug.LogWarning("SafeZone could not be created.");
 
+            SavePrefabCopy(playerObject, PlayerPrefabPath);
+            SavePrefabCopy(light.gameObject, TrafficLightPrefabPath);
+            SavePrefabCopy(pedestrian.gameObject, PedestrianSignalPrefabPath);
+            SavePrefabCopy(environment.transform.Find("TrafficSigns/CrossingSign")?.gameObject, CrossingSignPrefabPath);
+            SavePrefabCopy(environment.transform.Find("TownBackground/LampLeft")?.gameObject, StreetLampPrefabPath);
+
             EnsureBuildSettingsScenes();
+            RemoveUnwantedFloatingTextObjects(environment.transform);
+            RemoveUnwantedFloatingTextObjects(traffic.transform);
+            RemoveUnwantedFloatingTextObjects(FindOrCreate("Gameplay").transform);
             EditorSceneManager.MarkSceneDirty(level1Scene);
             EditorSceneManager.SaveScene(level1Scene);
             Selection.activeGameObject = playerObject;
@@ -163,19 +190,30 @@ namespace TrafficTown2D.Editor
         private static void CreateTownBackground(Transform parent)
         {
             GameObject background = ResetVisualGroup(parent, "TownBackground");
-            CreateWorldSprite(background.transform, "SkyBand", new Vector3(0f, 5.1f, 2f), new Vector3(16f, 1.8f, 1f), new Color(0.49f, 0.78f, 0.88f, 1f), -20, false);
+            CreateWorldSprite(background.transform, "SkyBand", new Vector3(0f, 0f, 2f), new Vector3(18.5f, 12.5f, 1f), new Color(0.55f, 0.82f, 0.94f, 1f), -30, false);
+            CreateWorldSprite(background.transform, "HorizonBand", new Vector3(0f, 4.1f, 1.95f), new Vector3(18.5f, 0.55f, 1f), new Color(0.78f, 0.91f, 0.90f, 1f), -18, false);
             CreateWorldSprite(background.transform, "GrassTop", new Vector3(0f, 4.58f, 1.9f), new Vector3(16f, 0.28f, 1f), new Color(0.42f, 0.72f, 0.45f, 1f), -8, false);
             CreateWorldSprite(background.transform, "GrassBottom", new Vector3(0f, -4.58f, 1.9f), new Vector3(16f, 0.28f, 1f), new Color(0.42f, 0.72f, 0.45f, 1f), -8, false);
 
+            CreateCloud(background.transform, "CloudLeft", new Vector3(-5.9f, 5.15f, 1.7f), 0.9f);
+            CreateCloud(background.transform, "CloudRight", new Vector3(5.1f, 5.28f, 1.7f), 0.72f);
             CreateBuilding(background.transform, "School", new Vector3(-6.2f, 4.15f, 1.8f), new Vector3(1.5f, 1.25f, 1f), new Color(0.96f, 0.72f, 0.42f, 1f));
             CreateBuilding(background.transform, "Library", new Vector3(-4.2f, 4.1f, 1.8f), new Vector3(1.25f, 1.1f, 1f), new Color(0.48f, 0.67f, 0.90f, 1f));
+            CreateBuilding(background.transform, "Clinic", new Vector3(4.2f, 4.06f, 1.8f), new Vector3(1.18f, 1.05f, 1f), new Color(0.73f, 0.88f, 0.70f, 1f));
             CreateBuilding(background.transform, "Shop", new Vector3(6.2f, 4.05f, 1.8f), new Vector3(1.55f, 1.05f, 1f), new Color(0.88f, 0.52f, 0.64f, 1f));
             CreateTree(background.transform, "TreeTopLeft", new Vector3(-7.35f, 3.75f, 1.6f));
+            CreateTree(background.transform, "TreeTopMiddle", new Vector3(0.35f, 3.95f, 1.6f));
             CreateTree(background.transform, "TreeTopRight", new Vector3(7.45f, 3.75f, 1.6f));
             CreateTree(background.transform, "TreeBottomLeft", new Vector3(-7.25f, -4.0f, 1.6f));
+            CreateTree(background.transform, "TreeBottomMiddle", new Vector3(2.35f, -4.0f, 1.6f));
             CreateTree(background.transform, "TreeBottomRight", new Vector3(7.25f, -4.0f, 1.6f));
             CreateStreetLamp(background.transform, "LampLeft", new Vector3(-5.1f, 2.2f, 1.4f));
+            CreateStreetLamp(background.transform, "LampCrossing", new Vector3(-1.35f, -2.35f, 1.4f));
             CreateStreetLamp(background.transform, "LampRight", new Vector3(5.7f, 2.2f, 1.4f));
+            CreateBench(background.transform, "BenchTop", new Vector3(1.75f, 2.72f, 1.4f));
+            CreateBush(background.transform, "BushBottomLeft", new Vector3(-4.7f, -4.16f, 1.5f));
+            CreateBush(background.transform, "BushBottomRight", new Vector3(5.05f, -4.16f, 1.5f));
+            CreateFlowerBed(background.transform, "FlowerBed", new Vector3(-0.7f, -4.18f, 1.5f));
         }
 
         private static void CreateRoadScene(Transform parent)
@@ -188,11 +226,19 @@ namespace TrafficTown2D.Editor
             CreateWorldSprite(details.transform, "TopCurb", new Vector3(0f, 2.03f, 0f), new Vector3(16f, 0.08f, 1f), RoadEdgeColor, 3, false);
             CreateWorldSprite(details.transform, "BottomCurb", new Vector3(0f, -2.03f, 0f), new Vector3(16f, 0.08f, 1f), RoadEdgeColor, 3, false);
             CreateWorldSprite(details.transform, "CenterLine", new Vector3(0f, 0f, 0f), new Vector3(16f, 0.05f, 1f), new Color(0.25f, 0.27f, 0.28f, 1f), 2, false);
+            CreateWorldSprite(details.transform, "StopLine", new Vector3(3.05f, -1.2f, 0f), new Vector3(0.12f, 1.55f, 1f), new Color(0.98f, 0.98f, 0.93f, 1f), 5, false);
 
             for (int index = 0; index < 8; index++)
             {
                 float x = -7f + index * 2f;
                 CreateWorldSprite(details.transform, "LaneDash" + index, new Vector3(x, 0f, 0f), new Vector3(0.95f, 0.08f, 1f), LaneMarkColor, 4, false);
+            }
+
+            for (int index = 0; index < 18; index++)
+            {
+                float x = -7.65f + index * 0.9f;
+                float y = index % 2 == 0 ? -0.82f : 0.88f;
+                CreateWorldSprite(details.transform, "AsphaltSpeck" + index, new Vector3(x, y, 0f), new Vector3(0.05f, 0.025f, 1f), new Color(0.18f, 0.19f, 0.21f, 0.45f), 1, false);
             }
 
             for (int index = 0; index < 11; index++)
@@ -210,7 +256,7 @@ namespace TrafficTown2D.Editor
         {
             GameObject signs = ResetVisualGroup(parent, "TrafficSigns");
             CreateSignPost(signs.transform, "CrossingSign", new Vector3(-2.8f, 2.45f, 0f), new Color(0.12f, 0.46f, 0.86f, 1f), "XING", true);
-            CreateSignPost(signs.transform, "SpeedLimitSign", new Vector3(6.4f, 2.45f, 0f), Color.white, "20", false);
+            CreateSignPost(signs.transform, "SpeedLimitSign", new Vector3(6.4f, 2.45f, 0f), Color.white, "30", false);
             CreateSignPost(signs.transform, "StopSign", new Vector3(-6.4f, -2.45f, 0f), new Color(0.9f, 0.12f, 0.1f, 1f), "STOP", false);
         }
 
@@ -248,15 +294,80 @@ namespace TrafficTown2D.Editor
             CreateWorldSprite(lamp.transform, "Glow", new Vector3(0.48f, 0.03f, 0f), new Vector3(0.26f, 0.18f, 1f), new Color(1f, 0.93f, 0.55f, 1f), 2, true);
         }
 
+        private static void CreateCloud(Transform parent, string name, Vector3 position, float scale)
+        {
+            GameObject cloud = FindOrCreateChild(parent, name);
+            cloud.transform.localPosition = position;
+            cloud.transform.localScale = Vector3.one * scale;
+            Color cloudColor = new Color(1f, 1f, 1f, 0.82f);
+            CreateWorldSprite(cloud.transform, "PuffLeft", new Vector3(-0.36f, -0.02f, 0f), new Vector3(0.74f, 0.42f, 1f), cloudColor, -16, true);
+            CreateWorldSprite(cloud.transform, "PuffMiddle", new Vector3(0f, 0.08f, 0f), new Vector3(0.86f, 0.52f, 1f), cloudColor, -15, true);
+            CreateWorldSprite(cloud.transform, "PuffRight", new Vector3(0.42f, -0.04f, 0f), new Vector3(0.76f, 0.40f, 1f), cloudColor, -16, true);
+        }
+
+        private static void CreateBush(Transform parent, string name, Vector3 position)
+        {
+            GameObject bush = FindOrCreateChild(parent, name);
+            bush.transform.localPosition = position;
+            bush.transform.localScale = Vector3.one;
+            CreateWorldSprite(bush.transform, "LeafLeft", new Vector3(-0.22f, 0f, 0f), new Vector3(0.5f, 0.32f, 1f), new Color(0.18f, 0.52f, 0.28f, 1f), -2, true);
+            CreateWorldSprite(bush.transform, "LeafMiddle", new Vector3(0.08f, 0.08f, 0f), new Vector3(0.58f, 0.42f, 1f), new Color(0.25f, 0.64f, 0.34f, 1f), -1, true);
+            CreateWorldSprite(bush.transform, "LeafRight", new Vector3(0.4f, 0f, 0f), new Vector3(0.5f, 0.32f, 1f), new Color(0.20f, 0.56f, 0.30f, 1f), -2, true);
+        }
+
+        private static void CreateBench(Transform parent, string name, Vector3 position)
+        {
+            GameObject bench = FindOrCreateChild(parent, name);
+            bench.transform.localPosition = position;
+            bench.transform.localScale = Vector3.one;
+            Color wood = new Color(0.62f, 0.34f, 0.17f, 1f);
+            Color metal = new Color(0.20f, 0.22f, 0.24f, 1f);
+            CreateWorldSprite(bench.transform, "Seat", new Vector3(0f, 0f, 0f), new Vector3(0.95f, 0.14f, 1f), wood, 1, false);
+            CreateWorldSprite(bench.transform, "Back", new Vector3(0f, 0.2f, 0f), new Vector3(0.95f, 0.12f, 1f), wood, 1, false);
+            CreateWorldSprite(bench.transform, "LegLeft", new Vector3(-0.34f, -0.18f, 0f), new Vector3(0.08f, 0.34f, 1f), metal, 0, false);
+            CreateWorldSprite(bench.transform, "LegRight", new Vector3(0.34f, -0.18f, 0f), new Vector3(0.08f, 0.34f, 1f), metal, 0, false);
+        }
+
+        private static void CreateFlowerBed(Transform parent, string name, Vector3 position)
+        {
+            GameObject bed = FindOrCreateChild(parent, name);
+            bed.transform.localPosition = position;
+            bed.transform.localScale = Vector3.one;
+            CreateWorldSprite(bed.transform, "Soil", new Vector3(0f, -0.08f, 0f), new Vector3(1.35f, 0.18f, 1f), new Color(0.42f, 0.24f, 0.12f, 1f), -3, false);
+            Color[] colors = { new Color(0.95f, 0.25f, 0.38f, 1f), new Color(1f, 0.82f, 0.22f, 1f), new Color(0.42f, 0.58f, 0.96f, 1f) };
+            for (int index = 0; index < 5; index++)
+            {
+                float x = -0.48f + index * 0.24f;
+                CreateWorldSprite(bed.transform, "Flower" + index, new Vector3(x, 0.08f, 0f), new Vector3(0.12f, 0.12f, 1f), colors[index % colors.Length], -1, true);
+            }
+        }
+
         private static void CreateSignPost(Transform parent, string name, Vector3 position, Color faceColor, string label, bool diamond)
         {
             GameObject sign = FindOrCreateChild(parent, name);
+            ClearChildren(sign.transform);
             sign.transform.localPosition = position;
             sign.transform.localScale = Vector3.one;
             CreateWorldSprite(sign.transform, "Post", new Vector3(0f, -0.45f, 0f), new Vector3(0.08f, 0.9f, 1f), new Color(0.29f, 0.31f, 0.32f, 1f), 12, false);
             CreateWorldSprite(sign.transform, "Base", new Vector3(0f, -0.92f, 0f), new Vector3(0.5f, 0.08f, 1f), new Color(0.29f, 0.31f, 0.32f, 1f), 12, false);
             GameObject face = CreateWorldSprite(sign.transform, "Face", new Vector3(0f, 0.2f, 0f), diamond ? new Vector3(0.72f, 0.72f, 1f) : new Vector3(0.74f, 0.48f, 1f), faceColor, 13, diamond);
             face.transform.localRotation = diamond ? Quaternion.Euler(0f, 0f, 45f) : Quaternion.identity;
+
+            if (diamond)
+            {
+                CreateWorldSprite(sign.transform, "PedestrianIconHead", new Vector3(0f, 0.34f, -0.02f), new Vector3(0.12f, 0.12f, 1f), Color.white, 15, true);
+                CreateWorldSprite(sign.transform, "PedestrianIconBody", new Vector3(0f, 0.2f, -0.02f), new Vector3(0.06f, 0.24f, 1f), Color.white, 15, false);
+            }
+            else if (name.Contains("Stop"))
+            {
+                CreateWorldSprite(sign.transform, "InnerBorder", new Vector3(0f, 0.2f, -0.01f), new Vector3(0.62f, 0.42f, 1f), Color.white, 14, false);
+                CreateWorldSprite(sign.transform, "InnerFace", new Vector3(0f, 0.2f, -0.02f), new Vector3(0.54f, 0.34f, 1f), faceColor, 15, false);
+            }
+            else if (name.Contains("Speed"))
+            {
+                CreateWorldSprite(sign.transform, "RedRing", new Vector3(0f, 0.2f, -0.01f), new Vector3(0.74f, 0.74f, 1f), new Color(0.85f, 0.12f, 0.12f, 1f), 14, true);
+                CreateWorldSprite(sign.transform, "WhiteInner", new Vector3(0f, 0.2f, -0.02f), new Vector3(0.58f, 0.58f, 1f), Color.white, 15, true);
+            }
         }
 
         private static TrafficLightController CreateTrafficLight(Transform parent)
@@ -323,6 +434,10 @@ namespace TrafficTown2D.Editor
             spriteRenderer.color = WithAlpha(color, active ? 1f : 0.15f);
             spriteRenderer.sortingOrder = 21;
             CreateWorldSprite(lensObject.transform, "Rim", Vector3.zero, new Vector3(1.18f, 1.18f, 1f), new Color(0.01f, 0.012f, 0.014f, 1f), 20, true);
+            SpriteRenderer glow = CreateWorldSprite(lensObject.transform, "Glow", Vector3.zero, new Vector3(1.48f, 1.48f, 1f), WithAlpha(color, active ? 0.28f : 0f), 19, true).GetComponent<SpriteRenderer>();
+            SpriteGlowFollower glowFollower = GetOrAdd(lensObject, typeof(SpriteGlowFollower)) as SpriteGlowFollower;
+            SetReference(glowFollower, "source", spriteRenderer);
+            SetReference(glowFollower, "glow", glow);
             return spriteRenderer;
         }
 
@@ -339,6 +454,10 @@ namespace TrafficTown2D.Editor
             SpriteRenderer signalRenderer = CreateWorldSprite(root.transform, "Signal", new Vector3(0f, 0f, 0f), new Vector3(1.05f, 1.15f, 1f), new Color(0.19f, 0.05f, 0.04f, 1f), 19, false).GetComponent<SpriteRenderer>();
             SpriteRenderer walkRenderer = CreateWorldSprite(root.transform, "WalkLight", new Vector3(0f, 0.34f, 0f), new Vector3(0.85f, 0.34f, 1f), new Color(0.2f, 0.8f, 0.35f, 1f), 20, false).GetComponent<SpriteRenderer>();
             SpriteRenderer dontWalkRenderer = CreateWorldSprite(root.transform, "DontWalkLight", new Vector3(0f, -0.34f, 0f), new Vector3(0.85f, 0.34f, 1f), new Color(0.19f, 0.05f, 0.04f, 1f), 20, false).GetComponent<SpriteRenderer>();
+            PedestrianSignalVisual visual = GetOrAdd(root, typeof(PedestrianSignalVisual)) as PedestrianSignalVisual;
+            SetReference(visual, "signal", signal);
+            SetReference(visual, "walkLabel", null);
+            SetReference(visual, "dontWalkLabel", null);
             SetReference(signal, "signalRenderer", signalRenderer);
             SetReference(signal, "walkRenderer", walkRenderer);
             SetReference(signal, "dontWalkRenderer", dontWalkRenderer);
@@ -374,10 +493,17 @@ namespace TrafficTown2D.Editor
             player.transform.localScale = Vector3.one;
             ClearChildren(player.transform);
             CreateCharacterVisual(player.transform);
-            GetOrAdd(player, typeof(Rigidbody2D));
+            Rigidbody2D body = GetOrAdd(player, typeof(Rigidbody2D)) as Rigidbody2D;
+            body.gravityScale = 0f;
+            body.freezeRotation = true;
             BoxCollider2D collider = GetOrAdd(player, typeof(BoxCollider2D)) as BoxCollider2D;
             collider.size = new Vector2(0.65f, 0.9f);
             GetOrAdd(player, typeof(PlayerController));
+            Animator animator = GetOrAdd(player, typeof(Animator)) as Animator;
+            animator.runtimeAnimatorController = EnsurePlayerAnimatorController();
+            PlayerVisualAnimator visualAnimator = GetOrAdd(player, typeof(PlayerVisualAnimator)) as PlayerVisualAnimator;
+            SetReference(visualAnimator, "observedBody", body);
+            SetReference(visualAnimator, "animator", animator);
             return player;
         }
 
@@ -398,34 +524,129 @@ namespace TrafficTown2D.Editor
             CreateWorldSprite(visual.transform, "RightShoe", new Vector3(0.16f, -0.62f, 0f), new Vector3(0.22f, 0.08f, 1f), new Color(0.06f, 0.07f, 0.08f, 1f), 32, false);
         }
 
-        private static VehicleController CreateVehiclePrefab(TrafficLightController light)
+        private static RuntimeAnimatorController EnsurePlayerAnimatorController()
         {
-            const string path = "Assets/Prefabs/Vehicle.prefab";
+            AnimationClip idleClip = EnsurePlayerAnimationClip(PlayerIdleClipPath, false);
+            AnimationClip walkClip = EnsurePlayerAnimationClip(PlayerWalkClipPath, true);
+
+            if (AssetDatabase.LoadAssetAtPath<AnimatorController>(PlayerAnimatorPath) != null)
+            {
+                AssetDatabase.DeleteAsset(PlayerAnimatorPath);
+            }
+
+            AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(PlayerAnimatorPath);
+            controller.AddParameter("Moving", AnimatorControllerParameterType.Bool);
+            AnimatorStateMachine stateMachine = controller.layers[0].stateMachine;
+            AnimatorState idleState = stateMachine.AddState("Idle");
+            AnimatorState walkState = stateMachine.AddState("Walk");
+            idleState.motion = idleClip;
+            walkState.motion = walkClip;
+            stateMachine.defaultState = idleState;
+
+            AnimatorStateTransition toWalk = idleState.AddTransition(walkState);
+            toWalk.hasExitTime = false;
+            toWalk.duration = 0.05f;
+            toWalk.AddCondition(AnimatorConditionMode.If, 0f, "Moving");
+
+            AnimatorStateTransition toIdle = walkState.AddTransition(idleState);
+            toIdle.hasExitTime = false;
+            toIdle.duration = 0.05f;
+            toIdle.AddCondition(AnimatorConditionMode.IfNot, 0f, "Moving");
+
+            AssetDatabase.SaveAssets();
+            return controller;
+        }
+
+        private static AnimationClip EnsurePlayerAnimationClip(string path, bool walking)
+        {
+            AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+            if (clip == null)
+            {
+                clip = new AnimationClip();
+                AssetDatabase.CreateAsset(clip, path);
+            }
+
+            clip.frameRate = 12f;
+            clip.ClearCurves();
+            if (walking)
+            {
+                SetTransformPositionCurve(clip, "CharacterVisual/LeftArm", "x", -0.38f, -0.28f, -0.38f, 0.4f);
+                SetTransformPositionCurve(clip, "CharacterVisual/RightArm", "x", 0.28f, 0.38f, 0.28f, 0.4f);
+                SetTransformPositionCurve(clip, "CharacterVisual/LeftLeg", "x", -0.18f, -0.08f, -0.18f, 0.4f);
+                SetTransformPositionCurve(clip, "CharacterVisual/RightLeg", "x", 0.08f, 0.18f, 0.08f, 0.4f);
+                SetTransformPositionCurve(clip, "CharacterVisual", "y", 0f, 0.035f, 0f, 0.4f);
+            }
+            else
+            {
+                SetTransformPositionCurve(clip, "CharacterVisual", "y", 0f, 0.015f, 0f, 1.2f);
+            }
+
+            AnimationClipSettings settings = AnimationUtility.GetAnimationClipSettings(clip);
+            settings.loopTime = true;
+            AnimationUtility.SetAnimationClipSettings(clip, settings);
+            EditorUtility.SetDirty(clip);
+            return clip;
+        }
+
+        private static void SetTransformPositionCurve(AnimationClip clip, string path, string axis, float start, float middle, float end, float duration)
+        {
+            AnimationCurve curve = new AnimationCurve(
+                new Keyframe(0f, start),
+                new Keyframe(duration * 0.5f, middle),
+                new Keyframe(duration, end));
+            AnimationUtility.SetEditorCurve(clip, EditorCurveBinding.FloatCurve(path, typeof(Transform), "m_LocalPosition." + axis), curve);
+        }
+
+        private static void CreateVehiclePrefabs(TrafficLightController light, out VehicleController bluePrefab, out VehicleController redPrefab, out VehicleController yellowPrefab)
+        {
+            bluePrefab = CreateVehiclePrefab(VehiclePrefabPath, "Vehicle", new Color(0.18f, 0.47f, 0.86f, 1f), light);
+            CreateVehiclePrefab(CarBluePrefabPath, "CarBlue", new Color(0.18f, 0.47f, 0.86f, 1f), light);
+            redPrefab = CreateVehiclePrefab(CarRedPrefabPath, "CarRed", new Color(0.92f, 0.22f, 0.18f, 1f), light);
+            yellowPrefab = CreateVehiclePrefab(CarYellowPrefabPath, "CarYellow", new Color(1f, 0.75f, 0.16f, 1f), light);
+        }
+
+        private static VehicleController CreateVehiclePrefab(string path, string objectName, Color bodyColor, TrafficLightController light)
+        {
             VehicleController prefab = AssetDatabase.LoadAssetAtPath<VehicleController>(path);
             if (prefab != null)
             {
                 GameObject prefabContents = PrefabUtility.LoadPrefabContents(path);
+                prefabContents.name = objectName;
                 RemoveMeshVisuals(prefabContents);
                 prefabContents.transform.localScale = Vector3.one;
                 ClearChildren(prefabContents.transform);
-                CreateVehicleVisual(prefabContents.transform, new Color(0.18f, 0.47f, 0.86f, 1f));
+                ConfigureVehicleRoot(prefabContents, light);
+                CreateVehicleVisual(prefabContents.transform, bodyColor);
                 PrefabUtility.SaveAsPrefabAsset(prefabContents, path);
                 PrefabUtility.UnloadPrefabContents(prefabContents);
                 SetFloat(prefab, "stoppingPoint", 2.8f);
                 SetFloat(prefab, "exitPoint", -10.5f);
                 return prefab;
             }
-            GameObject temporary = new GameObject("Vehicle");
-            CreateVehicleVisual(temporary.transform, new Color(0.18f, 0.47f, 0.86f, 1f));
-            GetOrAdd(temporary, typeof(Rigidbody2D));
-            GetOrAdd(temporary, typeof(BoxCollider2D));
-            VehicleController controller = GetOrAdd(temporary, typeof(VehicleController)) as VehicleController;
-            SetReference(controller, "trafficLight", light);
-            SetFloat(controller, "stoppingPoint", 2.8f);
-            SetFloat(controller, "exitPoint", -10.5f);
+
+            GameObject temporary = new GameObject(objectName);
+            ConfigureVehicleRoot(temporary, light);
+            CreateVehicleVisual(temporary.transform, bodyColor);
+            VehicleController controller = temporary.GetComponent<VehicleController>();
             prefab = PrefabUtility.SaveAsPrefabAsset(temporary, path).GetComponent<VehicleController>();
             Object.DestroyImmediate(temporary);
             return prefab;
+        }
+
+        private static void ConfigureVehicleRoot(GameObject vehicle, TrafficLightController light)
+        {
+            Rigidbody2D body = GetOrAdd(vehicle, typeof(Rigidbody2D)) as Rigidbody2D;
+            body.gravityScale = 0f;
+            body.freezeRotation = true;
+            BoxCollider2D collider = GetOrAdd(vehicle, typeof(BoxCollider2D)) as BoxCollider2D;
+            collider.size = new Vector2(1.55f, 0.75f);
+            collider.offset = new Vector2(0f, 0.02f);
+            VehicleController controller = GetOrAdd(vehicle, typeof(VehicleController)) as VehicleController;
+            SetReference(controller, "trafficLight", light);
+            SetFloat(controller, "stoppingPoint", 2.8f);
+            SetFloat(controller, "exitPoint", -10.5f);
+            VehicleWheelAnimator wheelAnimator = GetOrAdd(vehicle, typeof(VehicleWheelAnimator)) as VehicleWheelAnimator;
+            SetReference(wheelAnimator, "observedBody", body);
         }
 
         private static void CreateVehicleVisual(Transform parent, Color bodyColor)
@@ -433,25 +654,48 @@ namespace TrafficTown2D.Editor
             GameObject visual = FindOrCreateChild(parent, "VehicleVisual");
             visual.transform.localPosition = new Vector3(0f, 0.05f, 0f);
             visual.transform.localScale = Vector3.one;
+            CreateWorldSprite(visual.transform, "Shadow", new Vector3(0f, -0.48f, 0f), new Vector3(1.55f, 0.16f, 1f), new Color(0f, 0f, 0f, 0.22f), 29, true);
             CreateWorldSprite(visual.transform, "Body", new Vector3(0f, 0f, 0f), new Vector3(1.45f, 0.62f, 1f), bodyColor, 30, false);
             CreateWorldSprite(visual.transform, "Roof", new Vector3(0.08f, 0.3f, 0f), new Vector3(0.82f, 0.34f, 1f), bodyColor * 0.82f, 31, false);
             CreateWorldSprite(visual.transform, "Windshield", new Vector3(0.1f, 0.3f, -0.01f), new Vector3(0.54f, 0.22f, 1f), new Color(0.72f, 0.91f, 0.96f, 1f), 32, false);
             CreateWorldSprite(visual.transform, "RearWindow", new Vector3(-0.28f, 0.3f, -0.01f), new Vector3(0.18f, 0.22f, 1f), new Color(0.58f, 0.82f, 0.9f, 1f), 32, false);
-            CreateWorldSprite(visual.transform, "FrontWheel", new Vector3(0.42f, -0.36f, 0f), new Vector3(0.28f, 0.28f, 1f), new Color(0.05f, 0.06f, 0.08f, 1f), 31, true);
-            CreateWorldSprite(visual.transform, "RearWheel", new Vector3(-0.42f, -0.36f, 0f), new Vector3(0.28f, 0.28f, 1f), new Color(0.05f, 0.06f, 0.08f, 1f), 31, true);
+            CreateWorldSprite(visual.transform, "FrontBumper", new Vector3(0.78f, -0.05f, -0.01f), new Vector3(0.08f, 0.25f, 1f), new Color(0.92f, 0.94f, 0.93f, 1f), 32, false);
+            CreateWorldSprite(visual.transform, "RearBumper", new Vector3(-0.78f, -0.05f, -0.01f), new Vector3(0.08f, 0.25f, 1f), new Color(0.92f, 0.94f, 0.93f, 1f), 32, false);
+            GameObject frontWheel = CreateWorldSprite(visual.transform, "FrontWheel", new Vector3(0.42f, -0.36f, 0f), new Vector3(0.30f, 0.30f, 1f), new Color(0.05f, 0.06f, 0.08f, 1f), 31, true);
+            GameObject rearWheel = CreateWorldSprite(visual.transform, "RearWheel", new Vector3(-0.42f, -0.36f, 0f), new Vector3(0.30f, 0.30f, 1f), new Color(0.05f, 0.06f, 0.08f, 1f), 31, true);
+            CreateWheelDetails(frontWheel.transform);
+            CreateWheelDetails(rearWheel.transform);
             CreateWorldSprite(visual.transform, "Headlight", new Vector3(0.7f, 0.02f, -0.01f), new Vector3(0.1f, 0.14f, 1f), new Color(1f, 0.94f, 0.6f, 1f), 32, true);
+            CreateWorldSprite(visual.transform, "RearLight", new Vector3(-0.7f, 0.02f, -0.01f), new Vector3(0.1f, 0.14f, 1f), new Color(0.98f, 0.12f, 0.10f, 1f), 32, true);
+
+            VehicleWheelAnimator wheelAnimator = parent.GetComponent<VehicleWheelAnimator>();
+            if (wheelAnimator != null)
+            {
+                SetReference(wheelAnimator, "frontWheel", frontWheel.transform);
+                SetReference(wheelAnimator, "rearWheel", rearWheel.transform);
+            }
         }
 
-        private static void CreateInitialCars(Transform parent, VehicleController prefab)
+        private static void CreateWheelDetails(Transform wheel)
+        {
+            CreateWorldSprite(wheel, "Hub", Vector3.zero, new Vector3(0.42f, 0.42f, 1f), new Color(0.82f, 0.85f, 0.86f, 1f), 32, true);
+            CreateWorldSprite(wheel, "SpokeHorizontal", Vector3.zero, new Vector3(0.68f, 0.10f, 1f), new Color(0.45f, 0.48f, 0.50f, 1f), 33, false);
+            CreateWorldSprite(wheel, "SpokeVertical", Vector3.zero, new Vector3(0.10f, 0.68f, 1f), new Color(0.45f, 0.48f, 0.50f, 1f), 33, false);
+        }
+
+        private static void CreateInitialCars(Transform parent, VehicleController bluePrefab, VehicleController redPrefab, VehicleController yellowPrefab)
         {
             Transform cars = parent.Find("Cars");
-            if (cars.Find("Car 1") == null) PrefabUtility.InstantiatePrefab(prefab, cars).name = "Car 1";
-            if (cars.Find("Car 2") == null) PrefabUtility.InstantiatePrefab(prefab, cars).name = "Car 2";
+            if (cars.Find("Car 1") == null) PrefabUtility.InstantiatePrefab(redPrefab, cars).name = "Car 1";
+            if (cars.Find("Car 2") == null) PrefabUtility.InstantiatePrefab(yellowPrefab, cars).name = "Car 2";
+            if (cars.Find("Car 3") == null) PrefabUtility.InstantiatePrefab(bluePrefab, cars).name = "Car 3";
             TrafficLightController light = parent.Find("TrafficLight").GetComponent<TrafficLightController>();
             SetReference(cars.Find("Car 1").GetComponent<VehicleController>(), "trafficLight", light);
             SetReference(cars.Find("Car 2").GetComponent<VehicleController>(), "trafficLight", light);
+            SetReference(cars.Find("Car 3").GetComponent<VehicleController>(), "trafficLight", light);
             cars.Find("Car 1").position = new Vector3(6f, -1.2f, -1f);
             cars.Find("Car 2").position = new Vector3(1f, -1.2f, -1f);
+            cars.Find("Car 3").position = new Vector3(-4f, -1.2f, -1f);
         }
 
         private static LevelUIController CreateUI(ScoreManager score, TrafficLightController light, PedestrianSignalController pedestrian)
@@ -490,7 +734,7 @@ namespace TrafficTown2D.Editor
             GameObject scoreCard = CreateUIPanel(gameplayHud.transform, "ScoreCard", new Color(1f, 1f, 1f, 0.94f), roundedPanelSprite);
             SetRect(scoreCard.GetComponent<RectTransform>(), new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-36f, -36f), new Vector2(170f, 100f));
             AddShadow(scoreCard);
-            TextMeshProUGUI scoreIcon = CreateUIText(scoreCard.transform, "ScoreIcon", "★", 24, TextAlignmentOptions.Center, new Vector2(34f, 30f), new Vector2(22f, -18f), new Vector2(0f, 1f));
+            TextMeshProUGUI scoreIcon = CreateUIText(scoreCard.transform, "ScoreIcon", "*", 28, TextAlignmentOptions.Center, new Vector2(34f, 30f), new Vector2(22f, -18f), new Vector2(0f, 1f));
             scoreIcon.color = new Color(1f, 0.68f, 0.12f, 1f);
             TextMeshProUGUI scoreLabel = CreateUIText(scoreCard.transform, "ScoreTitle", "SCORE", 17, TextAlignmentOptions.Left, new Vector2(92f, 24f), new Vector2(58f, -22f), new Vector2(0f, 1f));
             scoreLabel.color = new Color(0.09f, 0.45f, 0.62f, 1f);
@@ -503,7 +747,7 @@ namespace TrafficTown2D.Editor
             SetRect(feedbackObject.GetComponent<RectTransform>(), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 38f), new Vector2(380f, 75f));
             AddShadow(feedbackObject);
             CanvasGroup feedbackGroup = GetOrAdd(feedbackObject, typeof(CanvasGroup)) as CanvasGroup;
-            TextMeshProUGUI feedbackIcon = CreateUIText(feedbackObject.transform, "Icon", "✓", 24, TextAlignmentOptions.Center, new Vector2(44f, 44f), new Vector2(22f, 0f), new Vector2(0f, 0.5f));
+            TextMeshProUGUI feedbackIcon = CreateUIText(feedbackObject.transform, "Icon", "v", 24, TextAlignmentOptions.Center, new Vector2(44f, 44f), new Vector2(22f, 0f), new Vector2(0f, 0.5f));
             feedbackIcon.color = new Color(0.18f, 0.67f, 0.32f, 1f);
             TextMeshProUGUI feedbackText = CreateUIText(feedbackObject.transform, "Message", "", 20, TextAlignmentOptions.Left, new Vector2(280f, 48f), new Vector2(78f, 0f), new Vector2(0f, 0.5f));
             feedbackText.color = new Color(0.11f, 0.15f, 0.20f, 1f);
@@ -522,7 +766,7 @@ namespace TrafficTown2D.Editor
             RectTransform completionRect = completion.GetComponent<RectTransform>();
             SetRect(completionRect, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(520f, 480f));
             AddShadow(completion);
-            TextMeshProUGUI celebration = CreateUIText(completion.transform, "CelebrationIcon", "★", 34, TextAlignmentOptions.Center, new Vector2(120f, 40f), new Vector2(0f, 196f), new Vector2(0.5f, 0.5f));
+            TextMeshProUGUI celebration = CreateUIText(completion.transform, "CelebrationIcon", "*", 34, TextAlignmentOptions.Center, new Vector2(120f, 40f), new Vector2(0f, 196f), new Vector2(0.5f, 0.5f));
             celebration.color = new Color(1f, 0.68f, 0.12f, 1f);
             TextMeshProUGUI title = CreateUIText(completion.transform, "Title", "LEVEL COMPLETE!", 40, TextAlignmentOptions.Center, new Vector2(430f, 50f), new Vector2(0f, 150f), new Vector2(0.5f, 0.5f));
             title.color = new Color(0.08f, 0.31f, 0.47f, 1f);
@@ -538,9 +782,9 @@ namespace TrafficTown2D.Editor
 
             GameObject statisticsRow = CreateUIPanel(completion.transform, "StatisticsRow", new Color(0f, 0f, 0f, 0f));
             SetRect(statisticsRow.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -56f), new Vector2(412f, 86f));
-            TextMeshProUGUI safeActions = CreateStatCard(statisticsRow.transform, "SafeActionsCard", "✓ SAFE ACTIONS", "0", new Vector2(-106f, 0f), new Color(0.18f, 0.67f, 0.32f, 1f), roundedPanelSprite);
-            TextMeshProUGUI mistakes = CreateStatCard(statisticsRow.transform, "MistakesCard", "! MISTAKES", "0", new Vector2(106f, 0f), new Color(0.92f, 0.45f, 0.18f, 1f), roundedPanelSprite);
-            TextMeshProUGUI ratingStars = CreateUIText(completion.transform, "Rating", "★★★★★", 28, TextAlignmentOptions.Center, new Vector2(260f, 36f), new Vector2(0f, -126f), new Vector2(0.5f, 0.5f));
+            TextMeshProUGUI safeActions = CreateStatCard(statisticsRow.transform, "SafeActionsCard", "SAFE ACTIONS", "0", new Vector2(-106f, 0f), new Color(0.18f, 0.67f, 0.32f, 1f), roundedPanelSprite);
+            TextMeshProUGUI mistakes = CreateStatCard(statisticsRow.transform, "MistakesCard", "ERRORS", "0", new Vector2(106f, 0f), new Color(0.92f, 0.45f, 0.18f, 1f), roundedPanelSprite);
+            TextMeshProUGUI ratingStars = CreateUIText(completion.transform, "Rating", "*****", 28, TextAlignmentOptions.Center, new Vector2(260f, 36f), new Vector2(0f, -126f), new Vector2(0.5f, 0.5f));
             ratingStars.color = new Color(1f, 0.68f, 0.12f, 1f);
             TextMeshProUGUI ratingLabel = CreateUIText(completion.transform, "RatingText", "Excellent!", 20, TextAlignmentOptions.Center, new Vector2(220f, 28f), new Vector2(0f, -158f), new Vector2(0.5f, 0.5f));
             ratingLabel.color = new Color(0.11f, 0.15f, 0.20f, 1f);
@@ -844,6 +1088,19 @@ namespace TrafficTown2D.Editor
             }
         }
 
+        private static void RemoveUnwantedFloatingTextObjects(Transform root)
+        {
+            if (root == null) return;
+            TextMesh[] textMeshes = root.GetComponentsInChildren<TextMesh>(true);
+            for (int i = textMeshes.Length - 1; i >= 0; i--)
+            {
+                if (textMeshes[i] != null)
+                {
+                    Undo.DestroyObjectImmediate(textMeshes[i].gameObject);
+                }
+            }
+        }
+
         private static Sprite EnsureTrafficLightSprite(string assetPath, bool circle)
         {
             Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
@@ -960,6 +1217,46 @@ namespace TrafficTown2D.Editor
         private static Color WithAlpha(Color color, float alpha)
         {
             return new Color(color.r, color.g, color.b, alpha);
+        }
+
+        private static void EnsureAssetFolders()
+        {
+            EnsureFolder("Assets/Sprites");
+            EnsureFolder("Assets/Sprites/Environment");
+            EnsureFolder("Assets/Sprites/Vehicles");
+            EnsureFolder("Assets/Sprites/Player");
+            EnsureFolder("Assets/Sprites/Traffic");
+            EnsureFolder("Assets/Animations");
+            EnsureFolder("Assets/Animations/Player");
+            EnsureFolder("Assets/Animations/Vehicles");
+            EnsureFolder("Assets/Prefabs");
+        }
+
+        private static void EnsureFolder(string path)
+        {
+            if (AssetDatabase.IsValidFolder(path))
+            {
+                return;
+            }
+
+            string parent = Path.GetDirectoryName(path)?.Replace('\\', '/');
+            string folder = Path.GetFileName(path);
+            if (!string.IsNullOrEmpty(parent) && !AssetDatabase.IsValidFolder(parent))
+            {
+                EnsureFolder(parent);
+            }
+
+            AssetDatabase.CreateFolder(parent, folder);
+        }
+
+        private static void SavePrefabCopy(GameObject source, string path)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            PrefabUtility.SaveAsPrefabAsset(source, path);
         }
 
         private static GameObject FindOrCreate(string name) { GameObject found = GameObject.Find(name); return found != null ? found : new GameObject(name); }

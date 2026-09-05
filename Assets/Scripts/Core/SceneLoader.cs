@@ -9,6 +9,7 @@ namespace TrafficTown2D.Core
 
         public const string MainMenuSceneName = "MainMenu";
         public const string FirstLevelSceneName = "Level1";
+        public const string SecondLevelSceneName = "Level2";
 
         private void Awake()
         {
@@ -24,11 +25,17 @@ namespace TrafficTown2D.Core
 
         public void LoadMainMenu()
         {
+            Time.timeScale = 1f;
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.SetState(GameState.MainMenu);
+            }
             LoadScene(MainMenuSceneName);
         }
 
         public void LoadLevel()
         {
+            Time.timeScale = 1f;
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.SetState(GameState.Playing);
@@ -39,6 +46,7 @@ namespace TrafficTown2D.Core
 
         public void LoadNextLevel()
         {
+            Time.timeScale = 1f;
             int nextSceneIndex = SceneManager.GetActiveScene().buildIndex + 1;
 
             if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
@@ -52,21 +60,27 @@ namespace TrafficTown2D.Core
             }
         }
 
+        public void LoadLevel2()
+        {
+            Time.timeScale = 1f;
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.SetState(GameState.Playing);
+            }
+
+            LoadScene(SecondLevelSceneName);
+        }
+
         public void ReloadCurrentLevel()
         {
+            Time.timeScale = 1f;
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
 
-        private static void LoadScene(string sceneName)
+        public void LoadScene(string sceneName)
         {
-            if (Application.CanStreamedLevelBeLoaded(sceneName))
-            {
-                SceneManager.LoadScene(sceneName);
-            }
-            else
-            {
-                Debug.LogError($"Scene '{sceneName}' is not available in Build Settings.");
-            }
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(sceneName);
         }
     }
 }

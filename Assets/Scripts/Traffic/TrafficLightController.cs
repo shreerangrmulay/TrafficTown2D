@@ -33,6 +33,13 @@ namespace TrafficTown2D.Traffic
             StartCoroutine(CycleLights());
         }
 
+        public void ConfigureDurations(float red, float green, float yellow)
+        {
+            redDuration = red;
+            greenDuration = green;
+            yellowDuration = yellow;
+        }
+
         public bool ShouldStopAt(float vehiclePosition, float stoppingPoint, float direction)
         {
             if (CurrentState == TrafficLightState.Green)

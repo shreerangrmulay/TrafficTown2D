@@ -28,16 +28,23 @@ namespace TrafficTown2D.Traffic
                 return;
             }
 
+            if (direction > 0f && transform.position.x > exitPoint)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
             bool stop = trafficLight != null && trafficLight.ShouldStopAt(transform.position.x, stoppingPoint, direction);
             body.linearVelocity = stop ? Vector2.zero : new Vector2(speed * direction, 0f);
         }
 
-        public void Configure(TrafficLightController light, float configuredSpeed, float configuredStoppingPoint, float configuredExitPoint)
+        public void Configure(TrafficLightController light, float configuredSpeed, float configuredStoppingPoint, float configuredExitPoint, float configuredDirection = -1f)
         {
             trafficLight = light;
             speed = configuredSpeed;
             stoppingPoint = configuredStoppingPoint;
             exitPoint = configuredExitPoint;
+            direction = configuredDirection;
         }
     }
 }

@@ -24,13 +24,40 @@ namespace TrafficTown2D.UI
 
         public void Play()
         {
-            if (sceneLoader == null)
+            Time.timeScale = 1f;
+
+            if (sceneLoader != null)
             {
-                Debug.LogError("MainMenuController needs a SceneLoader reference.");
+                sceneLoader.LoadLevel();
                 return;
             }
 
-            sceneLoader.LoadLevel();
+            if (SceneLoader.Instance != null)
+            {
+                SceneLoader.Instance.LoadLevel();
+                return;
+            }
+
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Level1");
+        }
+
+        public void PlayLevel2()
+        {
+            Time.timeScale = 1f;
+
+            if (sceneLoader != null)
+            {
+                sceneLoader.LoadLevel2();
+                return;
+            }
+
+            if (SceneLoader.Instance != null)
+            {
+                SceneLoader.Instance.LoadLevel2();
+                return;
+            }
+
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Level2");
         }
 
         public void Learn()
