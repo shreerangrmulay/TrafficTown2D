@@ -1,0 +1,31 @@
+{
+  "levelId": "level6",
+  "levelName": "One-Way Streets",
+  "difficulty": "medium-hard",
+  "objective": "Reach the destination without entering a one-way street in the wrong direction.",
+  "initialScore": 100,
+  "trafficLight": { "redSeconds": 0, "yellowSeconds": 0, "greenSeconds": 0 },
+  "vehicleSpawnInterval": 3,
+  "vehicleSpeed": 2.5,
+  "rewards": {
+    "waitForWalk": 0,
+    "useCrossing": 0,
+    "reachSidewalk": 0,
+    "unsafeCrossing": 0,
+    "vehicleCollision": -50
+  },
+  "missions": [
+    {
+      "missionId": "obey_do_not_enter",
+      "description": "Do not enter streets marked with a 'Do Not Enter' sign.",
+      "trafficRule": {
+        "ruleId": "do_not_enter",
+        "title": "Do Not Enter",
+        "description": "This sign indicates one-way traffic in the opposite direction."
+      },
+      "reward": 20
+    }
+  ],
+  "oneWayStreets": ["Main St", "Elm St"],
+  "signageTypes": ["DoNotEnter", "OneWay"]
+}

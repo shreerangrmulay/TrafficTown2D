@@ -10,6 +10,7 @@ namespace TrafficTown2D.Core
         public const string MainMenuSceneName = "MainMenu";
         public const string FirstLevelSceneName = "Level1";
         public const string SecondLevelSceneName = "Level2";
+        public const string ThirdLevelSceneName = "Level3";
 
         private void Awake()
         {
@@ -69,6 +70,17 @@ namespace TrafficTown2D.Core
             }
 
             LoadScene(SecondLevelSceneName);
+        }
+
+        public void LoadLevel3()
+        {
+            Time.timeScale = 1f;
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.SetState(GameState.Playing);
+            }
+
+            LoadScene(ThirdLevelSceneName);
         }
 
         public void ReloadCurrentLevel()

@@ -37,12 +37,43 @@ namespace TrafficTown2D.Editor
         }
 
         [MenuItem("TrafficTown/Setup Main Menu")]
-        private static void SetupMainMenu()
+        public static void SetupMainMenu()
         {
-            Canvas canvas = FindOrCreateCanvas();
+            const string MainMenuScenePath = "Assets/Scenes/MainMenu.unity";
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(MainMenuScenePath) == null)
+            {
+                Debug.LogError("Main Menu scene was not found at " + MainMenuScenePath);
+                return;
+            }
+
+            Scene mainMenuScene = EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
+            if (!mainMenuScene.IsValid())
+            {
+                Debug.LogError("Could not open Main Menu scene at " + MainMenuScenePath);
+                return;
+            }
+
+            EnsureCamera();
             EnsureEventSystem();
             SceneLoader sceneLoader = FindOrCreateSceneLoader();
             FindOrCreateGameManager();
+
+            // Clean any gameplay/level objects if they got into MainMenu by accident
+            string[] unwantedObjects = { "Environment", "Traffic", "Gameplay", "Player", "Pedestrians", "PlayerCar" };
+            foreach (GameObject rootObject in mainMenuScene.GetRootGameObjects())
+            {
+                for (int i = 0; i < unwantedObjects.Length; i++)
+                {
+                    if (rootObject.name == unwantedObjects[i])
+                    {
+                        Object.DestroyImmediate(rootObject);
+                        break;
+                    }
+                }
+            }
+
+            Canvas canvas = FindOrCreateCanvas();
+            ClearChildren(canvas.transform);
 
             CreateBackground(canvas.transform);
             CreateTitle(canvas.transform);
@@ -53,8 +84,8 @@ namespace TrafficTown2D.Editor
             CreateButtons(canvas.transform, controller);
             EnsureBuildSettingsScenes();
 
-            EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
-            EditorSceneManager.SaveScene(SceneManager.GetActiveScene());
+            EditorSceneManager.MarkSceneDirty(mainMenuScene);
+            EditorSceneManager.SaveScene(mainMenuScene);
             Selection.activeGameObject = canvas.gameObject;
             Debug.Log("TrafficTown main menu setup completed.");
         }
@@ -103,7 +134,7 @@ namespace TrafficTown2D.Editor
 
         private static void EnsureBuildSettingsScenes()
         {
-            string[] requiredScenePaths = { "Assets/Scenes/MainMenu.unity", "Assets/Scenes/Level1.unity", "Assets/Scenes/Level2.unity" };
+            string[] requiredScenePaths = { "Assets/Scenes/MainMenu.unity", "Assets/Scenes/Level1.unity", "Assets/Scenes/Level2.unity", "Assets/Scenes/Level3.unity" };
             EditorBuildSettingsScene[] currentScenes = EditorBuildSettings.scenes;
             var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(currentScenes);
 
@@ -306,6 +337,29 @@ namespace TrafficTown2D.Editor
             rectTransform.anchorMax = anchorMax;
             rectTransform.anchoredPosition = position;
             rectTransform.sizeDelta = size;
+        }
+
+        private static void ClearChildren(Transform parent)
+        {
+            for (int i = parent.childCount - 1; i >= 0; i--)
+            {
+                Object.DestroyImmediate(parent.GetChild(i).gameObject);
+            }
+        }
+
+        private static void EnsureCamera()
+        {
+            Camera camera = Object.FindAnyObjectByType<Camera>();
+            if (camera == null) camera = new GameObject("Main Camera").AddComponent<Camera>();
+            camera.orthographic = true;
+            camera.orthographicSize = 6f;
+            camera.transform.position = new Vector3(0f, 0f, -10f);
+            camera.backgroundColor = new Color(0.18f, 0.24f, 0.32f, 1f);
+            camera.tag = "MainCamera";
+            if (camera.GetComponent<AudioListener>() == null)
+            {
+                camera.gameObject.AddComponent<AudioListener>();
+            }
         }
     }
 }

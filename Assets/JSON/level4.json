@@ -1,0 +1,31 @@
+{
+  "levelId": "level4",
+  "levelName": "Bike Lane Awareness",
+  "difficulty": "medium",
+  "objective": "Navigate safely alongside cyclists using dedicated bike lanes.",
+  "initialScore": 100,
+  "trafficLight": { "redSeconds": 5, "yellowSeconds": 2, "greenSeconds": 5 },
+  "vehicleSpawnInterval": 3,
+  "vehicleSpeed": 2.5,
+  "rewards": {
+    "waitForWalk": 0,
+    "useCrossing": 0,
+    "reachSidewalk": 0,
+    "unsafeCrossing": 0,
+    "vehicleCollision": -50
+  },
+  "missions": [
+    {
+      "missionId": "check_blind_spot",
+      "description": "Check for cyclists before making a right turn across a bike lane.",
+      "trafficRule": {
+        "ruleId": "check_bike_lane",
+        "title": "Respect Bike Lanes",
+        "description": "Always check mirrors and blind spots before turning across a bike lane."
+      },
+      "reward": 15
+    }
+  ],
+  "bikeLanePresent": true,
+  "cyclistSpeed": 1.5
+}

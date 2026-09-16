@@ -1,0 +1,31 @@
+{
+  "levelId": "level10",
+  "levelName": "The Ultimate Commute",
+  "difficulty": "expert",
+  "objective": "Complete a long commute across the city involving all previously learned rules.",
+  "initialScore": 100,
+  "trafficLight": { "redSeconds": 6, "yellowSeconds": 3, "greenSeconds": 6 },
+  "vehicleSpawnInterval": 2,
+  "vehicleSpeed": 2.5,
+  "rewards": {
+    "waitForWalk": 0,
+    "useCrossing": 0,
+    "reachSidewalk": 0,
+    "unsafeCrossing": -20,
+    "vehicleCollision": -50
+  },
+  "missions": [
+    {
+      "missionId": "perfect_safety",
+      "description": "Reach the destination without breaking any traffic rules.",
+      "trafficRule": {
+        "ruleId": "master_driver",
+        "title": "Master Driver",
+        "description": "Apply all your knowledge about lights, signs, pedestrians, and emergency vehicles."
+      },
+      "reward": 50
+    }
+  ],
+  "levelLength": "long",
+  "multiObjective": true
+}

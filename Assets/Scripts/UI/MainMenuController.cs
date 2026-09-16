@@ -12,6 +12,17 @@ namespace TrafficTown2D.UI
         [SerializeField] private SceneLoader sceneLoader;
         [SerializeField] private Text messageText;
 
+        private void Awake()
+        {
+            string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            if (!string.IsNullOrEmpty(activeScene) && activeScene != "MainMenu")
+            {
+                Debug.LogWarning($"[MainMenuController] Found in non-MainMenu scene '{activeScene}'! Destroying menu object.");
+                Destroy(gameObject);
+                return;
+            }
+        }
+
         private void Start()
         {
             if (GameManager.Instance != null)
@@ -24,6 +35,7 @@ namespace TrafficTown2D.UI
 
         public void Play()
         {
+            DestroyMenuCanvas();
             Time.timeScale = 1f;
 
             if (sceneLoader != null)
@@ -43,6 +55,7 @@ namespace TrafficTown2D.UI
 
         public void PlayLevel2()
         {
+            DestroyMenuCanvas();
             Time.timeScale = 1f;
 
             if (sceneLoader != null)
@@ -60,14 +73,34 @@ namespace TrafficTown2D.UI
             UnityEngine.SceneManagement.SceneManager.LoadScene("Level2");
         }
 
+        public void PlayLevel3()
+        {
+            DestroyMenuCanvas();
+            Time.timeScale = 1f;
+
+            if (sceneLoader != null)
+            {
+                sceneLoader.LoadLevel3();
+                return;
+            }
+
+            if (SceneLoader.Instance != null)
+            {
+                SceneLoader.Instance.LoadLevel3();
+                return;
+            }
+
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Level3");
+        }
+
         public void Learn()
         {
-            ShowMessage("Learning Mode Coming Soon");
+            PlayLevel2();
         }
 
         public void Quiz()
         {
-            ShowMessage("Quiz Mode Coming Soon");
+            PlayLevel3();
         }
 
         public void Settings()
@@ -88,5 +121,24 @@ namespace TrafficTown2D.UI
                 messageText.text = message;
             }
         }
+
+        /// <summary>
+        /// Destroys the Canvas root GameObject so the main-menu UI does not persist
+        /// into level scenes. The GameManager / SceneLoader singletons on their own
+        /// separate GameObjects survive via DontDestroyOnLoad as intended.
+        /// </summary>
+        private void DestroyMenuCanvas()
+        {
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas != null)
+            {
+                Destroy(canvas.gameObject);
+            }
+            else
+            {
+                // Fallback: destroy this controller's root
+                Destroy(gameObject);
+            }
+        }
     }
-}
+}

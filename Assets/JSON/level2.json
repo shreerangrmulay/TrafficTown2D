@@ -1,0 +1,41 @@
+{
+  "levelId": "level2",
+  "levelName": "Traffic Light Basics",
+  "difficulty": "easy",
+  "objective": "Safely navigate intersections by obeying traffic light signals.",
+  "initialScore": 100,
+  "trafficLight": { "redSeconds": 6, "yellowSeconds": 3, "greenSeconds": 6 },
+  "vehicleSpawnInterval": 4,
+  "vehicleSpeed": 2.5,
+  "rewards": {
+    "waitForWalk": 0,
+    "useCrossing": 0,
+    "reachSidewalk": 0,
+    "unsafeCrossing": 0,
+    "vehicleCollision": -50
+  },
+  "missions": [
+    {
+      "missionId": "stop_on_red",
+      "description": "Stop completely before the white line when the light is red.",
+      "trafficRule": {
+        "ruleId": "red_light",
+        "title": "Stop at Red Lights",
+        "description": "You must come to a complete stop when the traffic light is red."
+      },
+      "reward": 15
+    },
+    {
+      "missionId": "proceed_on_green",
+      "description": "Proceed through the intersection only when the light is green.",
+      "trafficRule": {
+        "ruleId": "green_light",
+        "title": "Go on Green",
+        "description": "You may proceed when the light is green, provided the intersection is clear."
+      },
+      "reward": 10
+    }
+  ],
+  "intersectionTypes": ["4-way"],
+  "yellowLightDuration": 3.0
+}

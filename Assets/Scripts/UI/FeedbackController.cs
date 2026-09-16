@@ -89,7 +89,8 @@ namespace TrafficTown2D.UI
 
         private static bool IsWarning(string message)
         {
-            return message.Contains("wait") || message.Contains("Use") || message.Contains("careful") || message.Contains("right of way");
+            string normalized = message.ToUpperInvariant();
+            return normalized.Contains("WAIT") || normalized.Contains("STOP") || normalized.Contains("USE") || normalized.Contains("CAREFUL") || normalized.Contains("RIGHT OF WAY");
         }
     }
 }

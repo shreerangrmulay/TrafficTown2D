@@ -70,6 +70,27 @@ namespace TrafficTown2D.Editor
                 return;
             }
 
+            // Clean up any stray MainMenu components, services, or menu buttons that leaked into Level 1
+            MainMenuController[] strayMenus = Object.FindObjectsByType<MainMenuController>(FindObjectsInactive.Include);
+            for (int i = 0; i < strayMenus.Length; i++)
+            {
+                Object.DestroyImmediate(strayMenus[i]);
+            }
+            GameObject strayServices = GameObject.Find("MainMenu Services");
+            if (strayServices != null)
+            {
+                Object.DestroyImmediate(strayServices);
+            }
+            string[] strayButtonNames = { "PlayButton", "LearnButton", "QuizButton", "SettingsButton", "ExitButton", "Title", "Subtitle", "Background", "Message" };
+            for (int i = 0; i < strayButtonNames.Length; i++)
+            {
+                GameObject obj = GameObject.Find(strayButtonNames[i]);
+                if (obj != null && (obj.transform.parent == null || obj.transform.parent.name == "Canvas" || obj.transform.parent.name == "UI"))
+                {
+                    Object.DestroyImmediate(obj);
+                }
+            }
+
             EnsureAssetFolders();
             EnsureCamera();
             EnsureGlobalLight();
@@ -701,6 +722,11 @@ namespace TrafficTown2D.Editor
         private static LevelUIController CreateUI(ScoreManager score, TrafficLightController light, PedestrianSignalController pedestrian)
         {
             Canvas canvas = FindReusableCanvas();
+            MainMenuController staleMenu = canvas.GetComponent<MainMenuController>();
+            if (staleMenu != null)
+            {
+                Object.DestroyImmediate(staleMenu);
+            }
             canvas.name = "UI";
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             CanvasScaler canvasScaler = GetOrAdd(canvas.gameObject, typeof(CanvasScaler)) as CanvasScaler;

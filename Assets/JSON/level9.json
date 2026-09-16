@@ -1,0 +1,41 @@
+{
+  "levelId": "level9",
+  "levelName": "Roundabouts",
+  "difficulty": "hard",
+  "objective": "Enter, navigate, and exit a multi-lane roundabout safely.",
+  "initialScore": 100,
+  "trafficLight": { "redSeconds": 0, "yellowSeconds": 0, "greenSeconds": 0 },
+  "vehicleSpawnInterval": 3,
+  "vehicleSpeed": 2.0,
+  "rewards": {
+    "waitForWalk": 0,
+    "useCrossing": 0,
+    "reachSidewalk": 0,
+    "unsafeCrossing": 0,
+    "vehicleCollision": -50
+  },
+  "missions": [
+    {
+      "missionId": "yield_roundabout",
+      "description": "Yield to traffic already in the roundabout before entering.",
+      "trafficRule": {
+        "ruleId": "roundabout_yield",
+        "title": "Yield in Roundabouts",
+        "description": "Vehicles inside the roundabout have the right of way. Yield before entering."
+      },
+      "reward": 15
+    },
+    {
+      "missionId": "signal_exit",
+      "description": "Use your turn signal before exiting the roundabout.",
+      "trafficRule": {
+        "ruleId": "roundabout_exit",
+        "title": "Signal Your Exit",
+        "description": "Always indicate your intention to exit the roundabout to inform other drivers."
+      },
+      "reward": 15
+    }
+  ],
+  "roundaboutLanes": 2,
+  "turnSignalRequired": true
+}

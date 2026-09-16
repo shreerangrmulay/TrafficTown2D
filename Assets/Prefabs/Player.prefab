@@ -1103,6 +1103,14 @@ MonoBehaviour:
   scoreManager: {fileID: 0}
   feedback: {fileID: 0}
   levelUI: {fileID: 0}
+  stopZoneMinY: -2.85
+  stopZoneMaxY: -2.25
+  stopZoneCenterX: -2.2
+  stopZoneHalfWidth: 2.25
+  requiredStopSeconds: 1
+  crossingHalfWidth: 1.9
+  safeGapDistance: 4
+  laneVerticalRange: 2.25
 --- !u!95 &7383318382736745406
 Animator:
   serializedVersion: 7

@@ -1,0 +1,45 @@
+{
+  "levelId": "level7",
+  "levelName": "School Zones & Speed Limits",
+  "difficulty": "hard",
+  "objective": "Adjust driving speed dynamically based on speed limit signs and school zones.",
+  "initialScore": 100,
+  "trafficLight": { "redSeconds": 0, "yellowSeconds": 0, "greenSeconds": 0 },
+  "vehicleSpawnInterval": 6,
+  "vehicleSpeed": 1.5,
+  "rewards": {
+    "waitForWalk": 0,
+    "useCrossing": 0,
+    "reachSidewalk": 0,
+    "unsafeCrossing": 0,
+    "vehicleCollision": -50
+  },
+  "missions": [
+    {
+      "missionId": "reduce_speed_school_zone",
+      "description": "Reduce speed to 15 mph in the marked school zone.",
+      "trafficRule": {
+        "ruleId": "school_zone",
+        "title": "School Zone Speed Limit",
+        "description": "You must strictly obey reduced speed limits in school zones to protect children."
+      },
+      "reward": 25
+    },
+    {
+      "missionId": "obey_speed_limit",
+      "description": "Do not exceed the posted speed limits.",
+      "trafficRule": {
+        "ruleId": "speed_limit",
+        "title": "Obey Speed Limits",
+        "description": "Adjust your speed according to the signs on the side of the road."
+      },
+      "reward": 15
+    }
+  ],
+  "speedZones": [
+    { "zoneId": "start_zone", "limit": 30 },
+    { "zoneId": "school_zone", "limit": 15 },
+    { "zoneId": "end_zone", "limit": 30 }
+  ],
+  "dynamicSpeedLimits": true
+}

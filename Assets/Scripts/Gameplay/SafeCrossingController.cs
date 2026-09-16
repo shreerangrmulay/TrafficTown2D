@@ -6,6 +6,7 @@ using TrafficTown2D.Core;
 using TrafficTown2D.Player;
 using TrafficTown2D.Traffic;
 using TrafficTown2D.UI;
+using TrafficTown2D.Visuals;
 
 namespace TrafficTown2D.Gameplay
 {
@@ -18,9 +19,10 @@ namespace TrafficTown2D.Gameplay
         [SerializeField] private ScoreManager scoreManager;
         [SerializeField] private FeedbackController feedback;
         [SerializeField] private LevelUIController levelUI;
-        [SerializeField] private float stopZoneMinY = -2.85f;
-        [SerializeField] private float stopZoneMaxY = -2.25f;
-        [SerializeField] private float stopZoneHalfWidth = 2.25f;
+        [SerializeField] private float stopZoneMinY = -3.45f;
+        [SerializeField] private float stopZoneMaxY = -2.55f;
+        [SerializeField] private float stopZoneCenterX = -2.2f;
+        [SerializeField] private float stopZoneHalfWidth = 0.7f;
         [SerializeField] private float requiredStopSeconds = 1f;
         [SerializeField] private float crossingHalfWidth = 1.9f;
         [SerializeField] private float safeGapDistance = 4f;
@@ -38,6 +40,7 @@ namespace TrafficTown2D.Gameplay
         private bool unsafeCrossing;
         private bool crossingWasSafe;
         private bool completed;
+        private bool failed;
         private bool stopPromptShown;
         private bool stoppedAtStopSign;
         private bool lookedLeft;
@@ -59,12 +62,33 @@ namespace TrafficTown2D.Gameplay
             isLevel2 = SceneManager.GetActiveScene().name == SceneLoader.SecondLevelSceneName;
             if (isLevel2)
             {
+                stopZoneMinY = -3.45f;
+                stopZoneMaxY = -2.55f;
+                stopZoneCenterX = -2.2f;
+                stopZoneHalfWidth = 0.7f;
+                transform.position = new Vector3(-2.2f, -3.55f, transform.position.z);
+                Level2ModelDecorator decorator = GetComponent<Level2ModelDecorator>();
+                if (decorator == null) decorator = gameObject.AddComponent<Level2ModelDecorator>();
+                decorator.Build();
                 levelUI?.UpdateLevel2Objectives(false, false, false);
+            }
+            else
+            {
+                levelUI?.UpdateLevel1Objectives(false, false, false);
+                feedback?.Show("Find the zebra crossing, then wait for WALK.");
             }
         }
 
         private void Update()
         {
+            if (failed) return;
+
+            if (!isLevel2 && !completed && inRoad && trafficLight != null && trafficLight.CurrentState != TrafficLightState.Red)
+            {
+                FailForUnsafeSignal(trafficLight.CurrentState);
+                return;
+            }
+
             if (isLevel2 && !completed)
             {
                 UpdateStopChallenge();
@@ -88,6 +112,8 @@ namespace TrafficTown2D.Gameplay
 
         private void OnTriggerEnter2D(Collider2D other)
         {
+            if (failed) return;
+
             if (other.GetComponent<RoadZone>() != null)
             {
                 enteredRoad = true;
@@ -98,6 +124,12 @@ namespace TrafficTown2D.Gameplay
 
             if (other.GetComponent<SafeZone>() != null && enteredRoad && !completed)
             {
+                if (!isLevel2 && trafficLight != null && trafficLight.CurrentState != TrafficLightState.Red)
+                {
+                    FailForUnsafeSignal(trafficLight.CurrentState);
+                    return;
+                }
+
                 CompleteLevel();
             }
         }
@@ -107,12 +139,13 @@ namespace TrafficTown2D.Gameplay
             if (other.GetComponent<RoadZone>() != null)
             {
                 inRoad = false;
-                ResetRoadAttemptMistakes();
             }
         }
 
         private void OnCollisionEnter2D(Collision2D collision)
         {
+            if (failed) return;
+
             if (collision.collider.GetComponent<VehicleController>() == null)
             {
                 return;
@@ -145,6 +178,16 @@ namespace TrafficTown2D.Gameplay
             {
                 usedCrossing = true;
                 RewardCrossingUse();
+                if (!isLevel2)
+                {
+                    levelUI?.UpdateLevel1Objectives(true, countedSignalWait, false);
+                }
+            }
+
+            if (!isLevel2 && trafficLight != null && trafficLight.CurrentState != TrafficLightState.Red)
+            {
+                FailForUnsafeSignal(trafficLight.CurrentState);
+                return;
             }
 
             if (isLevel2)
@@ -199,6 +242,7 @@ namespace TrafficTown2D.Gameplay
                 countedSignalWait = true;
                 scoreManager?.RewardWait();
                 feedback?.Show("Good decision! You waited for the WALK signal.");
+                levelUI?.UpdateLevel1Objectives(usedCrossing, true, false);
             }
         }
 
@@ -208,25 +252,31 @@ namespace TrafficTown2D.Gameplay
 
             if (isLevel2)
             {
-                bool safeCrossing = usedCrossing && stoppedAtStopSign && lookedLeft && lookedRight && !unsafeThisRoad;
+                bool safeCrossing = usedCrossing && stoppedAtStopSign && lookedLeft && lookedRight && crossingWasSafe && !unsafeThisRoad;
                 if (safeCrossing)
                 {
                     scoreManager?.RewardSafeAction(30);
                     feedback?.Show("Great job! You looked both ways and crossed safely.");
                 }
 
-                levelUI?.UpdateLevel2Objectives(stoppedAtStopSign, lookedLeft && lookedRight, safeCrossing || usedCrossing);
+                levelUI?.UpdateLevel2Objectives(stoppedAtStopSign, lookedLeft && lookedRight, safeCrossing);
             }
             else
             {
-                if (usedCrossing && !countedCrossing)
+                bool completedSafely = usedCrossing && crossingWasSafe && !unsafeCrossing;
+                if (completedSafely && !countedCrossing)
                 {
                     countedCrossing = true;
                     scoreManager?.RewardCrossing();
                     feedback?.Show("Excellent! You used the zebra crossing.");
                 }
 
-                scoreManager?.RewardCompletion();
+                if (completedSafely)
+                {
+                    scoreManager?.RewardCompletion();
+                }
+
+                levelUI?.UpdateLevel1Objectives(usedCrossing, countedSignalWait, true);
             }
 
             GameManager.Instance?.SetState(GameState.LevelComplete);
@@ -239,6 +289,26 @@ namespace TrafficTown2D.Gameplay
             unsafeCrossing = true;
             if (collision) scoreManager?.PenalizeCollision(); else scoreManager?.PenalizeUnsafe();
             feedback?.Show(message);
+        }
+
+        private void FailForUnsafeSignal(TrafficLightState state)
+        {
+            if (failed) return;
+
+            failed = true;
+            unsafeCrossing = true;
+            if (body != null) body.linearVelocity = Vector2.zero;
+            scoreManager?.PenalizeUnsafe();
+
+            string signalName = state == TrafficLightState.Green ? "GREEN" : "YELLOW";
+            string instructions =
+                "The light is " + signalName + ", so traffic can still move.\n\n" +
+                "Wait for the traffic light to turn RED. Red stops the cars and gives you the WALK signal.\n\n" +
+                "Use the zebra crossing only when it is safe.";
+
+            GameManager.Instance?.SetState(GameState.GameOver);
+            Time.timeScale = 0f;
+            levelUI?.ShowFailure(instructions);
         }
 
         private void UpdateStopChallenge()
@@ -277,20 +347,20 @@ namespace TrafficTown2D.Gameplay
         private void UpdateLookControls()
         {
             Keyboard keyboard = Keyboard.current;
-            if (keyboard == null) return;
+            if (keyboard == null || !stoppedAtStopSign) return;
 
-            if (!lookedLeft && (keyboard.aKey.wasPressedThisFrame || keyboard.leftArrowKey.wasPressedThisFrame))
+            if (!lookedLeft && keyboard.qKey.wasPressedThisFrame)
             {
                 lookedLeft = true;
                 scoreManager?.RewardSafeAction(5);
-                feedback?.Show("LOOKING LEFT - checked.");
+                feedback?.Show("LEFT CHECKED. Now check right.");
             }
 
-            if (!lookedRight && (keyboard.dKey.wasPressedThisFrame || keyboard.rightArrowKey.wasPressedThisFrame))
+            if (!lookedRight && keyboard.eKey.wasPressedThisFrame)
             {
                 lookedRight = true;
                 scoreManager?.RewardSafeAction(5);
-                feedback?.Show("LOOKING RIGHT - checked.");
+                feedback?.Show("RIGHT CHECKED.");
             }
 
             if (lookedLeft && lookedRight && !bothDirectionsRewarded)
@@ -304,7 +374,7 @@ namespace TrafficTown2D.Gameplay
         private bool IsInsideStopZone()
         {
             Vector3 position = transform.position;
-            return Mathf.Abs(position.x) <= stopZoneHalfWidth && position.y >= stopZoneMinY && position.y <= stopZoneMaxY;
+            return Mathf.Abs(position.x - stopZoneCenterX) <= stopZoneHalfWidth && position.y >= stopZoneMinY && position.y <= stopZoneMaxY;
         }
 
         private bool IsUsingCrossing()
@@ -315,7 +385,7 @@ namespace TrafficTown2D.Gameplay
         private bool IsVehicleTooClose(out string side)
         {
             side = "both ways";
-            VehicleController[] vehicles = FindObjectsByType<VehicleController>(FindObjectsSortMode.None);
+            VehicleController[] vehicles = FindObjectsByType<VehicleController>();
             for (int index = 0; index < vehicles.Length; index++)
             {
                 VehicleController vehicle = vehicles[index];

@@ -1,0 +1,31 @@
+{
+  "levelId": "level3",
+  "levelName": "Yielding to Pedestrians",
+  "difficulty": "easy-medium",
+  "objective": "Drive through a neighborhood and yield to crossing pedestrians.",
+  "initialScore": 100,
+  "trafficLight": { "redSeconds": 0, "yellowSeconds": 0, "greenSeconds": 0 },
+  "vehicleSpawnInterval": 5,
+  "vehicleSpeed": 2.0,
+  "rewards": {
+    "waitForWalk": 0,
+    "useCrossing": 0,
+    "reachSidewalk": 0,
+    "unsafeCrossing": 0,
+    "vehicleCollision": -50
+  },
+  "missions": [
+    {
+      "missionId": "yield_to_pedestrian",
+      "description": "Stop for pedestrians at marked crosswalks.",
+      "trafficRule": {
+        "ruleId": "yield_pedestrian",
+        "title": "Yield to Pedestrians",
+        "description": "Drivers must yield the right-of-way to pedestrians at crosswalks."
+      },
+      "reward": 20
+    }
+  ],
+  "pedestrianSpawnRate": 0.5,
+  "yieldPatience": 10
+}

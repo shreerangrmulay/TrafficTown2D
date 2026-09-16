@@ -1,0 +1,31 @@
+{
+  "levelId": "level8",
+  "levelName": "Emergency Vehicles",
+  "difficulty": "hard",
+  "objective": "React correctly to approaching emergency vehicles.",
+  "initialScore": 100,
+  "trafficLight": { "redSeconds": 5, "yellowSeconds": 2, "greenSeconds": 5 },
+  "vehicleSpawnInterval": 4,
+  "vehicleSpeed": 2.5,
+  "rewards": {
+    "waitForWalk": 0,
+    "useCrossing": 0,
+    "reachSidewalk": 0,
+    "unsafeCrossing": 0,
+    "vehicleCollision": -50
+  },
+  "missions": [
+    {
+      "missionId": "pull_over",
+      "description": "Pull over to the side of the road and stop for emergency vehicles.",
+      "trafficRule": {
+        "ruleId": "emergency_vehicle",
+        "title": "Yield to Emergency Vehicles",
+        "description": "When you hear a siren or see flashing lights, pull over to the shoulder and stop completely."
+      },
+      "reward": 30
+    }
+  ],
+  "emergencyVehicleSpawnChance": 0.3,
+  "sirenAudioTriggers": true
+}

@@ -115,6 +115,11 @@ namespace TrafficTown2D.Editor
             SetReference(safety, "scoreManager", score);
             SetReference(safety, "feedback", feedbackController);
             SetReference(safety, "levelUI", ui);
+            SetFloat(safety, "stopZoneMinY", -3.45f);
+            SetFloat(safety, "stopZoneMaxY", -2.55f);
+            SetFloat(safety, "stopZoneCenterX", -2.2f);
+            SetFloat(safety, "stopZoneHalfWidth", 0.7f);
+            SetFloat(safety, "requiredStopSeconds", 1f);
 
             EnsureBuildSettingsScenes();
             RemoveUnwantedFloatingTextObjects(environment.transform);
@@ -312,8 +317,18 @@ namespace TrafficTown2D.Editor
 
         private static GameObject CreatePlayer()
         {
-            GameObject player = FindOrCreate("Player");
-            player.transform.position = new Vector3(0f, -3.0f, 0f);
+            GameObject player = GameObject.Find("Player");
+            GameObject playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
+            bool isPlayerPrefabInstance = player != null && PrefabUtility.GetCorrespondingObjectFromSource(player) == playerPrefab;
+            if (!isPlayerPrefabInstance && playerPrefab != null)
+            {
+                if (player != null) Undo.DestroyObjectImmediate(player);
+                player = PrefabUtility.InstantiatePrefab(playerPrefab) as GameObject;
+                player.name = "Player";
+            }
+
+            if (player == null) player = FindOrCreate("Player");
+            player.transform.position = new Vector3(-2.2f, -3.55f, 0f);
             player.transform.localScale = Vector3.one;
 
             Rigidbody2D body = GetOrAdd(player, typeof(Rigidbody2D)) as Rigidbody2D;
@@ -323,13 +338,9 @@ namespace TrafficTown2D.Editor
             BoxCollider2D box = GetOrAdd(player, typeof(BoxCollider2D)) as BoxCollider2D;
             box.size = new Vector2(0.6f, 0.9f);
 
-            SpriteRenderer renderer = GetOrAdd(player, typeof(SpriteRenderer)) as SpriteRenderer;
-            renderer.sprite = EnsureTrafficLightSprite(WorldSquareSpritePath, false);
-            renderer.color = new Color(0.22f, 0.58f, 0.92f, 1f);
-            renderer.sortingOrder = 10;
-
             PlayerController controller = GetOrAdd(player, typeof(PlayerController)) as PlayerController;
-            SetFloat(controller, "movementSpeed", 3.5f);
+            SetFloat(controller, "movementSpeed", 4f);
+            GetOrAdd(player, typeof(Level2ModelDecorator));
             return player;
         }
 
@@ -406,6 +417,8 @@ namespace TrafficTown2D.Editor
             LevelIntroController introController = GetOrAdd(introPanel, typeof(LevelIntroController)) as LevelIntroController;
             SetReference(introController, "introPanel", introPanel);
             SetReference(introController, "gotItButton", gotItButton);
+            SetReference(introController, "titleText", introTitle);
+            SetReference(introController, "messageText", introBody);
 
             // Completion Panel
             GameObject overlay = CreateUIPanel(hud.transform, "CompletionPanel", new Color(0.04f, 0.06f, 0.10f, 0.65f), null);
@@ -448,7 +461,6 @@ namespace TrafficTown2D.Editor
             Button nextButton = GetOrAddChildButton(completionCard.transform, "NextLevelButton", "NEXT LEVEL", new Vector2(105f, -175f), roundedPanelSprite);
             RectTransform nextRect = nextButton.GetComponent<RectTransform>();
             nextRect.sizeDelta = new Vector2(190f, 50f);
-            nextButton.interactable = false;
 
             LevelUIController ui = GetOrAdd(gameplayHud, typeof(LevelUIController)) as LevelUIController;
             SetReference(ui, "objectiveText", objective);
@@ -462,10 +474,12 @@ namespace TrafficTown2D.Editor
             SetReference(ui, "ratingStarsText", ratingStars);
             SetReference(ui, "ratingText", ratingLabel);
             SetReference(ui, "backButton", backButton);
+            SetReference(ui, "nextButton", nextButton);
             SetReference(ui, "scoreManager", score);
             SetReference(ui, "sceneLoader", Object.FindAnyObjectByType<SceneLoader>());
 
             UnityEventTools.AddPersistentListener(backButton.onClick, ui.BackToMenu);
+            UnityEventTools.AddPersistentListener(nextButton.onClick, ui.LoadNextOrReplay);
 
             gameplayHud.SetActive(true);
             overlay.SetActive(false);
@@ -803,7 +817,7 @@ namespace TrafficTown2D.Editor
 
         private static void EnsureBuildSettingsScenes()
         {
-            string[] requiredScenePaths = { "Assets/Scenes/MainMenu.unity", "Assets/Scenes/Level1.unity", "Assets/Scenes/Level2.unity" };
+            string[] requiredScenePaths = { "Assets/Scenes/MainMenu.unity", "Assets/Scenes/Level1.unity", "Assets/Scenes/Level2.unity", "Assets/Scenes/Level3.unity" };
             List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
             foreach (string path in requiredScenePaths)
             {

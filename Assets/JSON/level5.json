@@ -1,0 +1,41 @@
+{
+  "levelId": "level5",
+  "levelName": "The Stop Sign",
+  "difficulty": "medium",
+  "objective": "Navigate a 4-way stop intersection using the correct right-of-way rules.",
+  "initialScore": 100,
+  "trafficLight": { "redSeconds": 0, "yellowSeconds": 0, "greenSeconds": 0 },
+  "vehicleSpawnInterval": 4,
+  "vehicleSpeed": 2.5,
+  "rewards": {
+    "waitForWalk": 0,
+    "useCrossing": 0,
+    "reachSidewalk": 0,
+    "unsafeCrossing": 0,
+    "vehicleCollision": -50
+  },
+  "missions": [
+    {
+      "missionId": "complete_stop",
+      "description": "Come to a complete stop at the STOP sign.",
+      "trafficRule": {
+        "ruleId": "stop_sign",
+        "title": "Stop Sign",
+        "description": "You must come to a complete stop before the stop line."
+      },
+      "reward": 15
+    },
+    {
+      "missionId": "right_of_way",
+      "description": "Yield to the vehicle on the right or the vehicle that arrived first.",
+      "trafficRule": {
+        "ruleId": "right_of_way_rule",
+        "title": "Right of Way",
+        "description": "Yield to the car that arrived first, or the car on your right if you arrived at the same time."
+      },
+      "reward": 15
+    }
+  ],
+  "stopSignLocations": ["north", "south", "east", "west"],
+  "aiBehavior": "rightOfWay"
+}
