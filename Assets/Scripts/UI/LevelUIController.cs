@@ -200,54 +200,27 @@ namespace TrafficTown2D.UI
         {
             Time.timeScale = 1f;
 
-            string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            if (sceneName == SceneLoader.ThirdLevelSceneName)
+            int currentLevel = SceneLoader.GetCurrentLevelNumber();
+
+            // Last level: replay
+            if (currentLevel >= SceneLoader.TotalLevelCount)
             {
-                if (sceneLoader != null)
-                {
-                    sceneLoader.ReloadCurrentLevel();
-                    return;
-                }
-                if (SceneLoader.Instance != null)
-                {
-                    SceneLoader.Instance.ReloadCurrentLevel();
-                    return;
-                }
+                if (sceneLoader != null) { sceneLoader.ReloadCurrentLevel(); return; }
+                if (SceneLoader.Instance != null) { SceneLoader.Instance.ReloadCurrentLevel(); return; }
                 UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
                 return;
             }
 
-            if (isLevel2 || sceneName == SceneLoader.SecondLevelSceneName)
+            // Not the last level: load the next one
+            int nextLevel = currentLevel + 1;
+            if (sceneLoader != null) { sceneLoader.LoadLevelByNumber(nextLevel); return; }
+            if (SceneLoader.Instance != null) { SceneLoader.Instance.LoadLevelByNumber(nextLevel); return; }
+
+            string nextSceneName = SceneLoader.GetLevelSceneName(nextLevel);
+            if (nextSceneName != null)
             {
-                if (sceneLoader != null)
-                {
-                    sceneLoader.LoadLevel3();
-                    return;
-                }
-
-                if (SceneLoader.Instance != null)
-                {
-                    SceneLoader.Instance.LoadLevel3();
-                    return;
-                }
-
-                UnityEngine.SceneManagement.SceneManager.LoadScene(SceneLoader.ThirdLevelSceneName);
-                return;
+                UnityEngine.SceneManagement.SceneManager.LoadScene(nextSceneName);
             }
-
-            if (sceneLoader != null)
-            {
-                sceneLoader.LoadLevel2();
-                return;
-            }
-
-            if (SceneLoader.Instance != null)
-            {
-                SceneLoader.Instance.LoadLevel2();
-                return;
-            }
-
-            UnityEngine.SceneManagement.SceneManager.LoadScene(SceneLoader.SecondLevelSceneName);
         }
 
         public void RestartCurrentLevel()
@@ -330,8 +303,8 @@ namespace TrafficTown2D.UI
 
         private void RenameNextButton()
         {
-            string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            string buttonLabel = sceneName == SceneLoader.ThirdLevelSceneName ? "REPLAY" : "NEXT LEVEL";
+            int currentLevel = SceneLoader.GetCurrentLevelNumber();
+            string buttonLabel = currentLevel >= SceneLoader.TotalLevelCount ? "REPLAY" : "NEXT LEVEL";
             SetButtonLabel(nextButton, buttonLabel);
         }
 

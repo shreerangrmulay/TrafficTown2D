@@ -11,6 +11,7 @@ namespace TrafficTown2D.UI
 
         [SerializeField] private SceneLoader sceneLoader;
         [SerializeField] private Text messageText;
+        [SerializeField] private GameObject levelSelectPanel;
 
         private void Awake()
         {
@@ -31,67 +32,47 @@ namespace TrafficTown2D.UI
             }
 
             ShowMessage(string.Empty);
+            if (levelSelectPanel != null) levelSelectPanel.SetActive(false);
         }
 
         public void Play()
         {
-            DestroyMenuCanvas();
-            Time.timeScale = 1f;
-
-            if (sceneLoader != null)
-            {
-                sceneLoader.LoadLevel();
-                return;
-            }
-
-            if (SceneLoader.Instance != null)
-            {
-                SceneLoader.Instance.LoadLevel();
-                return;
-            }
-
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Level1");
+            PlayLevel(1);
         }
 
-        public void PlayLevel2()
+        public void PlayLevel(int levelNumber)
         {
             DestroyMenuCanvas();
             Time.timeScale = 1f;
 
             if (sceneLoader != null)
             {
-                sceneLoader.LoadLevel2();
+                sceneLoader.LoadLevelByNumber(levelNumber);
                 return;
             }
 
             if (SceneLoader.Instance != null)
             {
-                SceneLoader.Instance.LoadLevel2();
+                SceneLoader.Instance.LoadLevelByNumber(levelNumber);
                 return;
             }
 
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Level2");
+            string sceneName = SceneLoader.GetLevelSceneName(levelNumber);
+            if (sceneName != null)
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
+            }
         }
 
-        public void PlayLevel3()
-        {
-            DestroyMenuCanvas();
-            Time.timeScale = 1f;
-
-            if (sceneLoader != null)
-            {
-                sceneLoader.LoadLevel3();
-                return;
-            }
-
-            if (SceneLoader.Instance != null)
-            {
-                SceneLoader.Instance.LoadLevel3();
-                return;
-            }
-
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Level3");
-        }
+        public void PlayLevel2() => PlayLevel(2);
+        public void PlayLevel3() => PlayLevel(3);
+        public void PlayLevel4() => PlayLevel(4);
+        public void PlayLevel5() => PlayLevel(5);
+        public void PlayLevel6() => PlayLevel(6);
+        public void PlayLevel7() => PlayLevel(7);
+        public void PlayLevel8() => PlayLevel(8);
+        public void PlayLevel9() => PlayLevel(9);
+        public void PlayLevel10() => PlayLevel(10);
 
         public void Learn()
         {
@@ -103,9 +84,25 @@ namespace TrafficTown2D.UI
             PlayLevel3();
         }
 
+        public void OpenLevelSelect()
+        {
+            if (levelSelectPanel != null)
+            {
+                levelSelectPanel.SetActive(true);
+            }
+        }
+
+        public void CloseLevelSelect()
+        {
+            if (levelSelectPanel != null)
+            {
+                levelSelectPanel.SetActive(false);
+            }
+        }
+
         public void Settings()
         {
-            ShowMessage("Settings Coming Soon");
+            OpenLevelSelect();
         }
 
         public void Exit()

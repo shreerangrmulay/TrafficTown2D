@@ -80,7 +80,8 @@ namespace TrafficTown2D.Editor
             CreateSubtitle(canvas.transform);
             Text messageText = CreateMessage(canvas.transform);
             MainMenuController controller = FindOrCreateController(canvas.gameObject);
-            AssignControllerReferences(controller, sceneLoader, messageText);
+            GameObject levelSelect = CreateLevelSelectModal(canvas.transform, controller);
+            AssignControllerReferences(controller, sceneLoader, messageText, levelSelect);
             CreateButtons(canvas.transform, controller);
             EnsureBuildSettingsScenes();
 
@@ -134,7 +135,19 @@ namespace TrafficTown2D.Editor
 
         private static void EnsureBuildSettingsScenes()
         {
-            string[] requiredScenePaths = { "Assets/Scenes/MainMenu.unity", "Assets/Scenes/Level1.unity", "Assets/Scenes/Level2.unity", "Assets/Scenes/Level3.unity" };
+            string[] requiredScenePaths = {
+                "Assets/Scenes/MainMenu.unity",
+                "Assets/Scenes/Level1.unity",
+                "Assets/Scenes/Level2.unity",
+                "Assets/Scenes/Level3.unity",
+                "Assets/Scenes/Level4.unity",
+                "Assets/Scenes/Level5.unity",
+                "Assets/Scenes/Level6.unity",
+                "Assets/Scenes/Level7.unity",
+                "Assets/Scenes/Level8.unity",
+                "Assets/Scenes/Level9.unity",
+                "Assets/Scenes/Level10.unity"
+            };
             EditorBuildSettingsScene[] currentScenes = EditorBuildSettings.scenes;
             var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(currentScenes);
 
@@ -201,11 +214,13 @@ namespace TrafficTown2D.Editor
             return canvasObject.AddComponent<MainMenuController>();
         }
 
-        private static void AssignControllerReferences(MainMenuController controller, SceneLoader sceneLoader, Text messageText)
+        private static void AssignControllerReferences(MainMenuController controller, SceneLoader sceneLoader, Text messageText, GameObject levelSelect)
         {
             SerializedObject serializedController = new SerializedObject(controller);
             serializedController.FindProperty("sceneLoader").objectReferenceValue = sceneLoader;
             serializedController.FindProperty("messageText").objectReferenceValue = messageText;
+            SerializedProperty lsp = serializedController.FindProperty("levelSelectPanel");
+            if (lsp != null) lsp.objectReferenceValue = levelSelect;
             serializedController.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -255,8 +270,8 @@ namespace TrafficTown2D.Editor
 
         private static void CreateButtons(Transform canvasTransform, MainMenuController controller)
         {
-            string[] names = { "PlayButton", "LearnButton", "QuizButton", "SettingsButton", "ExitButton" };
-            string[] labels = { "PLAY", "LEARN", "QUIZ", "SETTINGS", "EXIT" };
+            string[] names = { "PlayButton", "LearnButton", "QuizButton", "LevelSelectButton", "ExitButton" };
+            string[] labels = { "PLAY", "LEARN", "QUIZ", "LEVEL SELECT", "EXIT" };
             float firstY = 218f;
 
             for (int index = 0; index < names.Length; index++)
@@ -294,12 +309,112 @@ namespace TrafficTown2D.Editor
                     UnityEventTools.AddPersistentListener(button.onClick, controller.Quiz);
                     break;
                 case 3:
-                    UnityEventTools.AddPersistentListener(button.onClick, controller.Settings);
+                    UnityEventTools.AddPersistentListener(button.onClick, controller.OpenLevelSelect);
                     break;
                 case 4:
                     UnityEventTools.AddPersistentListener(button.onClick, controller.Exit);
                     break;
             }
+        }
+
+        private static GameObject CreateLevelSelectModal(Transform canvasTransform, MainMenuController controller)
+        {
+            GameObject panel = FindOrCreateChild(canvasTransform, "LevelSelectPanel");
+            Image bg = GetOrAdd<Image>(panel);
+            bg.color = new Color(0.06f, 0.10f, 0.16f, 0.96f);
+            SetFullScreen(panel.GetComponent<RectTransform>());
+
+            Text title = GetOrAdd<Text>(FindOrCreateChild(panel.transform, "Title"));
+            title.text = "SELECT A LEVEL";
+            title.alignment = TextAnchor.MiddleCenter;
+            title.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            title.fontSize = 32;
+            title.fontStyle = FontStyle.Bold;
+            title.color = Color.white;
+            SetRect(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -60f), new Vector2(500f, 50f));
+
+            string[] levelNames = new[]
+            {
+                "Level 1: Safe Crossing",
+                "Level 2: Smart Crossing",
+                "Level 3: Yield to Pedestrians",
+                "Level 4: Bike Lane Awareness",
+                "Level 5: The Stop Sign",
+                "Level 6: One-Way Streets",
+                "Level 7: School Zones & Speed",
+                "Level 8: Emergency Vehicles",
+                "Level 9: Roundabouts",
+                "Level 10: The Ultimate Commute"
+            };
+
+            float colWidth = 280f;
+            float colHeight = 44f;
+            float spacingY = 10f;
+            float startY = -130f;
+
+            for (int i = 0; i < 10; i++)
+            {
+                int col = i < 5 ? 0 : 1;
+                int row = i % 5;
+                float x = col == 0 ? -155f : 155f;
+                float y = startY - row * (colHeight + spacingY);
+
+                int levelNum = i + 1;
+                GameObject btnObj = FindOrCreateChild(panel.transform, "LevelBtn_" + levelNum);
+                Button btn = GetOrAdd<Button>(btnObj);
+                Image img = GetOrAdd<Image>(btnObj);
+                img.color = new Color(0.16f, 0.48f, 0.68f, 1f);
+
+                Text lbl = GetOrAddChildText(btnObj.transform, "Label");
+                lbl.text = levelNames[i];
+                lbl.alignment = TextAnchor.MiddleCenter;
+                lbl.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                lbl.fontSize = 15;
+                lbl.fontStyle = FontStyle.Bold;
+                lbl.color = Color.white;
+                SetFullScreen(lbl.rectTransform);
+
+                RectTransform r = GetOrAdd<RectTransform>(btnObj);
+                SetRect(r, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(x, y), new Vector2(colWidth, colHeight));
+
+                btn.onClick.RemoveAllListeners();
+                switch (levelNum)
+                {
+                    case 1: UnityEventTools.AddPersistentListener(btn.onClick, controller.Play); break;
+                    case 2: UnityEventTools.AddPersistentListener(btn.onClick, controller.PlayLevel2); break;
+                    case 3: UnityEventTools.AddPersistentListener(btn.onClick, controller.PlayLevel3); break;
+                    case 4: UnityEventTools.AddPersistentListener(btn.onClick, controller.PlayLevel4); break;
+                    case 5: UnityEventTools.AddPersistentListener(btn.onClick, controller.PlayLevel5); break;
+                    case 6: UnityEventTools.AddPersistentListener(btn.onClick, controller.PlayLevel6); break;
+                    case 7: UnityEventTools.AddPersistentListener(btn.onClick, controller.PlayLevel7); break;
+                    case 8: UnityEventTools.AddPersistentListener(btn.onClick, controller.PlayLevel8); break;
+                    case 9: UnityEventTools.AddPersistentListener(btn.onClick, controller.PlayLevel9); break;
+                    case 10: UnityEventTools.AddPersistentListener(btn.onClick, controller.PlayLevel10); break;
+                }
+            }
+
+            GameObject closeObj = FindOrCreateChild(panel.transform, "CloseButton");
+            Button closeBtn = GetOrAdd<Button>(closeObj);
+            Image closeImg = GetOrAdd<Image>(closeObj);
+            closeImg.color = new Color(0.72f, 0.28f, 0.28f, 1f);
+
+            Text closeLbl = GetOrAddChildText(closeObj.transform, "Label");
+            closeLbl.text = "BACK TO MENU";
+            closeLbl.alignment = TextAnchor.MiddleCenter;
+            closeLbl.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            closeLbl.fontSize = 16;
+            closeLbl.fontStyle = FontStyle.Bold;
+            closeLbl.color = Color.white;
+            SetFullScreen(closeLbl.rectTransform);
+
+            RectTransform closeR = GetOrAdd<RectTransform>(closeObj);
+            SetRect(closeR, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -430f), new Vector2(220f, 44f));
+
+            closeBtn.onClick.RemoveAllListeners();
+            UnityEventTools.AddPersistentListener(closeBtn.onClick, controller.CloseLevelSelect);
+
+            panel.SetActive(false);
+            return panel;
         }
 
         private static GameObject FindOrCreateChild(Transform parent, string childName)

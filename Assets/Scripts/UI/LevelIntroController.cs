@@ -44,6 +44,7 @@ namespace TrafficTown2D.UI
         {
             string currentScene = SceneManager.GetActiveScene().name;
 
+            // Resolve text components if not assigned
             if (titleText == null || messageText == null)
             {
                 TMP_Text[] textElements = introPanel.GetComponentsInChildren<TMP_Text>(true);
@@ -55,77 +56,60 @@ namespace TrafficTown2D.UI
                 }
             }
 
-            if (currentScene == "Level2")
-            {
-                if (titleText != null) titleText.text = "SMART CROSSING";
-                if (messageText != null)
-                {
-                    messageText.text = "1. Stop beside the STOP sign.\n2. Press Q and E to check both ways.\n3. Use the crossing when WALK appears.";
-                }
-                return;
-            }
+            int levelNum = SceneLoader.GetCurrentLevelNumber();
 
-            if (currentScene == "Level1")
+            switch (levelNum)
             {
-                if (titleText != null) titleText.text = "SAFE CROSSING";
-                if (messageText != null)
-                {
-                    messageText.text = "Use WASD or arrow keys to move.\n\nFind the zebra crossing, wait for WALK, then cross.";
-                }
-                return;
+                case 1:
+                    SetTexts("SAFE CROSSING",
+                        "Use WASD or arrow keys to move.\n\nFind the zebra crossing, wait for WALK, then cross.");
+                    break;
+                case 2:
+                    SetTexts("SMART CROSSING",
+                        "1. Stop beside the STOP sign.\n2. Press Q and E to check both ways.\n3. Use the crossing when WALK appears.");
+                    break;
+                case 3:
+                    SetTexts("🚗 YIELD TO PEDESTRIANS",
+                        "Drive with A/D or ← → keys.\n\nSlow down and STOP when a pedestrian steps onto the crosswalk.");
+                    break;
+                case 4:
+                    SetTexts("🚲 BIKE LANE AWARENESS",
+                        "Drive with A/D or ← → keys.\n\nPress Q or E to check blind spots before turning across the bike lane.\nDo NOT hit cyclists!");
+                    break;
+                case 5:
+                    SetTexts("🛑 THE STOP SIGN",
+                        "Approach the 4-way stop intersection.\n\n1. Come to a COMPLETE stop at the line.\n2. Yield to vehicles that arrived first.\n3. Proceed when clear.");
+                    break;
+                case 6:
+                    SetTexts("⬆️ ONE-WAY STREETS",
+                        "Drive with A/D and W/S keys.\n\nWatch for DO NOT ENTER signs.\nDo NOT drive the wrong way on one-way streets!\nReach the destination.");
+                    break;
+                case 7:
+                    SetTexts("🏫 SCHOOL ZONES & SPEED LIMITS",
+                        "Drive forward with A/D keys.\n\nObey all posted speed limits.\nSLOW DOWN in the school zone!\nYour speed is shown on the HUD.");
+                    break;
+                case 8:
+                    SetTexts("🚑 EMERGENCY VEHICLES",
+                        "Drive forward with A/D keys.\n\nWhen you hear sirens or see flashing lights:\n1. Pull over to the shoulder (W/S to move up/down).\n2. STOP completely.\n3. Wait until the emergency vehicle passes.");
+                    break;
+                case 9:
+                    SetTexts("🔄 ROUNDABOUTS",
+                        "Drive with A/D and W/S keys.\n\n1. YIELD to traffic inside the roundabout.\n2. Enter when clear.\n3. Press Q or E to SIGNAL before exiting.");
+                    break;
+                case 10:
+                    SetTexts("🏆 THE ULTIMATE COMMUTE",
+                        "Apply everything you've learned!\n\nDrive through the city and pass each checkpoint without breaking any traffic rules.\n3 strikes and you're out!");
+                    break;
+                default:
+                    SetTexts("TRAFFIC TOWN", "Follow the traffic rules to complete the level.");
+                    break;
             }
-            
-            // Find text components if not assigned
-            if (titleText == null)
-            {
-                Transform[] allChildren = introPanel.GetComponentsInChildren<Transform>();
-                foreach (var child in allChildren)
-                {
-                    if (child.name.Contains("Title"))
-                    {
-                        titleText = child.GetComponent<TMP_Text>();
-                        break;
-                    }
-                }
-            }
+        }
 
-            if (messageText == null)
-            {
-                Transform[] allChildren = introPanel.GetComponentsInChildren<Transform>();
-                foreach (var child in allChildren)
-                {
-                    if (child.name.Contains("Message"))
-                    {
-                        messageText = child.GetComponent<TMP_Text>();
-                        break;
-                    }
-                }
-            }
-
-            if (currentScene == "Level2")
-            {
-                if (titleText != null) titleText.text = "🚸 SMART CROSSING";
-                if (messageText != null)
-                {
-                    messageText.text = "Look BOTH ways before crossing.\n\nWait for a safe gap in traffic.";
-                }
-            }
-            else if (currentScene == "Level1")
-            {
-                if (titleText != null) titleText.text = "🚸 SAFE CROSSING";
-                if (messageText != null)
-                {
-                    messageText.text = "Use the zebra crossing.\n\nObey the traffic signal.";
-                }
-            }
-            else if (currentScene == "Level3")
-            {
-                if (titleText != null) titleText.text = "🚗 YIELD TO PEDESTRIANS";
-                if (messageText != null)
-                {
-                    messageText.text = "Drive with A/D or ← → keys.\n\nSlow down and STOP when a pedestrian steps onto the crosswalk.";
-                }
-            }
+        private void SetTexts(string title, string message)
+        {
+            if (titleText != null) titleText.text = title;
+            if (messageText != null) messageText.text = message;
         }
 
         public void DismissIntro()
