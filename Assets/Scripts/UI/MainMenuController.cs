@@ -12,6 +12,7 @@ namespace TrafficTown2D.UI
         [SerializeField] private SceneLoader sceneLoader;
         [SerializeField] private Text messageText;
         [SerializeField] private GameObject levelSelectPanel;
+        [SerializeField] private GameObject mainMenuContent;
 
         private void Awake()
         {
@@ -33,12 +34,15 @@ namespace TrafficTown2D.UI
 
             ShowMessage(string.Empty);
             if (levelSelectPanel != null) levelSelectPanel.SetActive(false);
+            if (mainMenuContent != null) mainMenuContent.SetActive(true);
         }
 
         public void Play()
         {
-            PlayLevel(1);
+            OpenLevelSelect();
         }
+
+        public void PlayLevel1() => PlayLevel(1);
 
         public void PlayLevel(int levelNumber)
         {
@@ -81,14 +85,35 @@ namespace TrafficTown2D.UI
 
         public void Quiz()
         {
-            PlayLevel3();
+            DestroyMenuCanvas();
+            Time.timeScale = 1f;
+
+            if (sceneLoader != null)
+            {
+                sceneLoader.LoadQuiz();
+                return;
+            }
+
+            if (SceneLoader.Instance != null)
+            {
+                SceneLoader.Instance.LoadQuiz();
+                return;
+            }
+
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Quiz");
         }
 
         public void OpenLevelSelect()
         {
+            if (mainMenuContent != null)
+            {
+                mainMenuContent.SetActive(false);
+            }
+
             if (levelSelectPanel != null)
             {
                 levelSelectPanel.SetActive(true);
+                levelSelectPanel.transform.SetAsLastSibling();
             }
         }
 
@@ -97,6 +122,11 @@ namespace TrafficTown2D.UI
             if (levelSelectPanel != null)
             {
                 levelSelectPanel.SetActive(false);
+            }
+
+            if (mainMenuContent != null)
+            {
+                mainMenuContent.SetActive(true);
             }
         }
 

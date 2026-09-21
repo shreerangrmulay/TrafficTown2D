@@ -1,0 +1,54 @@
+{
+  "missions": [
+    {
+      "index": 1,
+      "name": "SCHOOL ZONE",
+      "subtitle": "CONTROL YOUR SPEED",
+      "objective": "Slow down to 20 km/h and stop for crossing pedestrians.",
+      "speedLimit": 20.0,
+      "reward": 30,
+      "speedingPenalty": 20,
+      "mistakePenalty": 30
+    },
+    {
+      "index": 2,
+      "name": "INTERSECTION",
+      "subtitle": "OBEY THE SIGNAL",
+      "objective": "Stop at the red light and cross only on green.",
+      "speedLimit": 40.0,
+      "reward": 40,
+      "speedingPenalty": 20,
+      "mistakePenalty": 25
+    },
+    {
+      "index": 3,
+      "name": "EMERGENCY VEHICLE",
+      "subtitle": "GIVE WAY",
+      "objective": "Pull over to the right and stop to allow the ambulance to pass.",
+      "speedLimit": 40.0,
+      "reward": 40,
+      "speedingPenalty": 20,
+      "mistakePenalty": 30
+    },
+    {
+      "index": 4,
+      "name": "DISTRACTION",
+      "subtitle": "STAY FOCUSED",
+      "objective": "Ignore phone alerts and keep your full attention on the road.",
+      "speedLimit": 40.0,
+      "reward": 30,
+      "speedingPenalty": 20,
+      "mistakePenalty": 25
+    },
+    {
+      "index": 5,
+      "name": "FINAL CITY DRIVE",
+      "subtitle": "APPLY EVERYTHING",
+      "objective": "Maintain safe speed, watch for hazards, and drive to the finish line!",
+      "speedLimit": 30.0,
+      "reward": 50,
+      "speedingPenalty": 20,
+      "mistakePenalty": 20
+    }
+  ]
+}

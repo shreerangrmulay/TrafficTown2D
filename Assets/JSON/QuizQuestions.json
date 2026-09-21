@@ -1,0 +1,508 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "category": "Traffic Signals",
+      "question": "What does a RED traffic light mean for vehicles?",
+      "signSprite": "TRAFFIC RED",
+      "options": [
+        "Go immediately",
+        "Stop completely behind the stop line",
+        "Speed up to cross",
+        "Honk and keep moving"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A red traffic light means all vehicles must stop completely behind the stop line."
+    },
+    {
+      "id": 2,
+      "category": "Traffic Signals",
+      "question": "What should drivers do when a traffic light turns YELLOW?",
+      "signSprite": "TRAFFIC YELLOW",
+      "options": [
+        "Speed up as fast as possible",
+        "Slow down and prepare to stop safely",
+        "Close their eyes and drive",
+        "Turn off the car engine"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A yellow light warns that the light is about to turn red. Slow down and stop if it is safe to do so."
+    },
+    {
+      "id": 3,
+      "category": "Traffic Signals",
+      "question": "What does a GREEN traffic light mean?",
+      "signSprite": "TRAFFIC GREEN",
+      "options": [
+        "Go, after checking that the intersection is clear",
+        "Stop immediately",
+        "Reverse your vehicle",
+        "Wait for a pedestrian to run"
+      ],
+      "correctAnswer": 0,
+      "explanation": "A green light means you may go, but always check that the road and intersection are clear first."
+    },
+    {
+      "id": 4,
+      "category": "Traffic Signals",
+      "question": "What does a RED pedestrian signal figure mean?",
+      "signSprite": "PEDESTRIAN RED",
+      "options": [
+        "Start running across the street",
+        "Wait on the sidewalk and do NOT cross",
+        "Cross slowly while checking your phone",
+        "Dance on the zebra crossing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A red pedestrian signal means 'DON'T WALK'. Stay safely on the sidewalk until it turns green."
+    },
+    {
+      "id": 5,
+      "category": "Traffic Signals",
+      "question": "When the pedestrian signal turns GREEN (WALK), what should you do before stepping onto the road?",
+      "signSprite": "PEDESTRIAN GREEN",
+      "options": [
+        "Run without looking",
+        "Look left, right, and left again to make sure cars have stopped",
+        "Close your eyes and walk",
+        "Start playing with a ball"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Even on a green WALK signal, always look left, right, and left again to ensure all cars have come to a complete stop."
+    },
+    {
+      "id": 6,
+      "category": "Zebra Crossings",
+      "question": "What is the primary purpose of a Zebra Crossing?",
+      "signSprite": "ZEBRA CROSSING",
+      "options": [
+        "A place for cars to park",
+        "A designated safe zone for pedestrians to cross the road",
+        "A street art decoration",
+        "A lane for fast race cars"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Zebra crossings give pedestrians a safe and visible location to cross roads."
+    },
+    {
+      "id": 7,
+      "category": "Zebra Crossings",
+      "question": "If you reach a zebra crossing and a car is approaching, what should you do?",
+      "signSprite": "ZEBRA CROSSING",
+      "options": [
+        "Jump in front of the car",
+        "Wait on the curb until the driver sees you and comes to a full stop",
+        "Turn around and run into the street",
+        "Shout at the driver while running"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Always wait at the curb until you make eye contact with the driver and the vehicle has completely stopped."
+    },
+    {
+      "id": 8,
+      "category": "Zebra Crossings",
+      "question": "Why are zebra crossings painted with black and white stripes?",
+      "signSprite": "ZEBRA CROSSING",
+      "options": [
+        "To confuse drivers",
+        "To make crossing pedestrians clearly visible to approaching drivers",
+        "To match zebras in a zoo",
+        "To hide dirt on the road"
+      ],
+      "correctAnswer": 1,
+      "explanation": "High-contrast white stripes make pedestrians stand out clearly against dark asphalt."
+    },
+    {
+      "id": 9,
+      "category": "Zebra Crossings",
+      "question": "What should you do while walking across a zebra crossing?",
+      "signSprite": "PEDESTRIAN CROSSING",
+      "options": [
+        "Walk at a steady pace and keep watching for traffic",
+        "Stop in the middle to send a text message",
+        "Drop your toys and pick them up slowly",
+        "Run as fast as you can while looking at the sky"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Walk at a normal, steady pace and keep looking left and right for vehicles while crossing."
+    },
+    {
+      "id": 10,
+      "category": "Zebra Crossings",
+      "question": "Can vehicles stop or park on top of a zebra crossing?",
+      "signSprite": "ZEBRA CROSSING",
+      "options": [
+        "Yes, whenever they want",
+        "No, zebra crossings must remain clear for pedestrians",
+        "Only on weekends",
+        "Only if the driver is buying ice cream"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Vehicles must never block zebra crossings so pedestrians can cross safely without stepping out into traffic."
+    },
+    {
+      "id": 11,
+      "category": "Pedestrian Safety",
+      "question": "If there is no sidewalk available, which side of the road should pedestrians walk on?",
+      "signSprite": "PEDESTRIAN CROSSING",
+      "options": [
+        "In the middle of the road",
+        "Facing oncoming traffic so you can see approaching vehicles",
+        "With your back turned to traffic",
+        "In the bushes"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Walking facing oncoming traffic lets you see vehicles coming toward you so you can react if needed."
+    },
+    {
+      "id": 12,
+      "category": "Pedestrian Safety",
+      "question": "What is the safest clothing to wear when walking near roads at night or in the dark?",
+      "signSprite": "PEDESTRIAN CROSSING",
+      "options": [
+        "All black clothing",
+        "Bright or reflective clothing that reflects light",
+        "A dark raincoat with a hood covering your eyes",
+        "Camouflage clothes"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Bright and reflective clothing helps drivers see pedestrians easily from a long distance at night."
+    },
+    {
+      "id": 13,
+      "category": "Pedestrian Safety",
+      "question": "Why is it dangerous to cross the road from between two parked cars?",
+      "signSprite": "STOP",
+      "options": [
+        "Parked cars might turn into robots",
+        "Drivers cannot see you coming out, and you cannot see oncoming cars",
+        "Parked cars are too shiny",
+        "It takes too long to squeeze between them"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Parked cars block the view for both you and approaching drivers, making a surprise collision very dangerous."
+    },
+    {
+      "id": 14,
+      "category": "Pedestrian Safety",
+      "question": "What should young children do when walking near busy streets?",
+      "signSprite": "SCHOOL AHEAD",
+      "options": [
+        "Hold hands with an adult or parent",
+        "Run ahead as fast as possible",
+        "Bounce a basketball near the road",
+        "Hide behind light poles"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Holding an adult's hand keeps young children safe from unexpected traffic hazards."
+    },
+    {
+      "id": 15,
+      "category": "Pedestrian Safety",
+      "question": "Why should you avoid using mobile phones or headphones while walking near traffic?",
+      "signSprite": "NO PHONE",
+      "options": [
+        "It reduces battery life",
+        "It distracts your eyes and ears from spotting nearby danger",
+        "Headphones attract cars",
+        "Phones don't work near roads"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Phones and headphones take your attention away from hearing car horns or seeing approaching vehicles."
+    },
+    {
+      "id": 16,
+      "category": "Road Signs",
+      "question": "What does an OCTAGONAL RED road sign with white letters mean?",
+      "signSprite": "STOP",
+      "options": [
+        "Speed up",
+        "STOP completely before proceeding",
+        "Yield to cars on the left",
+        "Park your vehicle"
+      ],
+      "correctAnswer": 1,
+      "explanation": "An 8-sided red STOP sign requires all vehicles to come to a complete standstill."
+    },
+    {
+      "id": 17,
+      "category": "Road Signs",
+      "question": "What does a circular sign with a red border and a white horizontal bar mean?",
+      "signSprite": "NO ENTRY",
+      "options": [
+        "NO ENTRY - Vehicles are not allowed to enter",
+        "Free parking zone",
+        "Drive as fast as you want",
+        "Pedestrian crossing ahead"
+      ],
+      "correctAnswer": 0,
+      "explanation": "The NO ENTRY sign prohibits vehicles from entering a restricted street or lane."
+    },
+    {
+      "id": 18,
+      "category": "Road Signs",
+      "question": "What does a blue square sign featuring a walking person icon indicate?",
+      "signSprite": "PEDESTRIAN CROSSING",
+      "options": [
+        "No pedestrians allowed",
+        "Pedestrian Crossing nearby - Drivers should watch for people walking",
+        "Running track ahead",
+        "Bus stop"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Pedestrian Crossing sign warns drivers that pedestrians may be crossing the road."
+    },
+    {
+      "id": 19,
+      "category": "Road Signs",
+      "question": "What does a triangular warning sign with children carrying schoolbags mean?",
+      "signSprite": "SCHOOL AHEAD",
+      "options": [
+        "School Ahead - Slow down and watch carefully for children",
+        "Playground closed",
+        "No homework zone",
+        "Bicycles only"
+      ],
+      "correctAnswer": 0,
+      "explanation": "The School Ahead sign alerts drivers to slow down because children are walking nearby."
+    },
+    {
+      "id": 20,
+      "category": "Road Signs",
+      "question": "What does a white circular sign with a red ring and the number '30' mean?",
+      "signSprite": "SPEED LIMIT",
+      "options": [
+        "Minimum speed is 30 km/h",
+        "Maximum Speed Limit is 30 km/h",
+        "30 cars allowed on the road",
+        "Wait 30 minutes"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A speed limit sign indicates the maximum legal speed allowed in that area for safety."
+    },
+    {
+      "id": 21,
+      "category": "Road Signs",
+      "question": "What does a blue square sign with a white letter 'H' indicate?",
+      "signSprite": "HOSPITAL",
+      "options": [
+        "Helicopter landing pad",
+        "Hospital nearby - Keep quiet and yield to ambulances",
+        "Hotel for dogs",
+        "Highway entrance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Hospital sign warns drivers to avoid unnecessary noise and yield to medical vehicles."
+    },
+    {
+      "id": 22,
+      "category": "Vehicle Safety",
+      "question": "Why must every passenger in a car wear a seatbelt?",
+      "signSprite": "SEATBELT",
+      "options": [
+        "To look cool",
+        "To prevent severe injury during sudden stops or collisions",
+        "To keep the seats clean",
+        "Because the car won't start without it"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Seatbelts hold passengers securely in place, drastically reducing the risk of injury during accidents."
+    },
+    {
+      "id": 23,
+      "category": "Vehicle Safety",
+      "question": "What essential safety gear must you always wear when riding a bicycle?",
+      "signSprite": "HELMET",
+      "options": [
+        "Sunglasses",
+        "A properly fitted protective helmet",
+        "Winter gloves",
+        "Baseball cap"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A bicycle helmet protects your head and brain from serious impact if you fall."
+    },
+    {
+      "id": 24,
+      "category": "Vehicle Safety",
+      "question": "Which side of a car or bus should passengers exit from?",
+      "signSprite": "PEDESTRIAN CROSSING",
+      "options": [
+        "The side facing the road and active traffic",
+        "The side facing the sidewalk or safe curb area",
+        "Through the trunk",
+        "From whichever side opens first"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Always exit vehicles onto the sidewalk or curb side so you step out away from moving traffic."
+    },
+    {
+      "id": 25,
+      "category": "Vehicle Safety",
+      "question": "Is it safe to stick your hands or head out of a moving car window?",
+      "signSprite": "NO ENTRY",
+      "options": [
+        "Yes, to feel the wind",
+        "No, passing vehicles or roadside objects can cause severe harm",
+        "Yes, if you wave at people",
+        "Only when going fast"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Never extend hands, arms, or head out of a vehicle window as passing traffic poses extreme danger."
+    },
+    {
+      "id": 26,
+      "category": "Vehicle Safety",
+      "question": "Why is it dangerous to play games or hide near parked vehicles?",
+      "signSprite": "SAFE PLAY",
+      "options": [
+        "Parked cars might get dirty",
+        "Drivers starting or reversing cannot see small children in blind spots",
+        "Cars don't like noise",
+        "The tires might roll"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Drivers have blind spots behind and around their vehicles where small children are invisible."
+    },
+    {
+      "id": 27,
+      "category": "Emergency Vehicles",
+      "question": "What should you do when you hear an emergency siren (Ambulance or Fire Truck)?",
+      "signSprite": "AMBULANCE",
+      "options": [
+        "Stand in the middle of the road to watch",
+        "Stay clear, step back onto the sidewalk, and let it pass",
+        "Run in front of the emergency vehicle",
+        "Start shouting loudly"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Emergency vehicles are responding to urgent calls. Give them a clear path immediately."
+    },
+    {
+      "id": 28,
+      "category": "Emergency Vehicles",
+      "question": "What color are flashing emergency lights on ambulances and police cars?",
+      "signSprite": "AMBULANCE",
+      "options": [
+        "Green and Yellow",
+        "Red and Blue",
+        "Pink and Purple",
+        "Black and Brown"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Red and blue flashing lights signal to all road users that an emergency vehicle is in high priority."
+    },
+    {
+      "id": 29,
+      "category": "Emergency Vehicles",
+      "question": "If you are halfway across a zebra crossing and an ambulance with sirens approaches, what is best?",
+      "signSprite": "AMBULANCE",
+      "options": [
+        "Stop and sit down on the road",
+        "Quickly and safely complete your crossing to clear the lane",
+        "Turn back into traffic",
+        "Freeze like a statue"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Quickly finish stepping onto the safe sidewalk so the lane is immediately clear for the ambulance."
+    },
+    {
+      "id": 30,
+      "category": "Safe Road Behaviour",
+      "question": "Where is the safest place for children to play with balls or ride scooters?",
+      "signSprite": "SAFE PLAY",
+      "options": [
+        "Near busy intersections",
+        "In designated parks, playgrounds, or enclosed yards away from traffic",
+        "On the road shoulder",
+        "In parking lots"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Parks and playgrounds provide safe spaces free from moving vehicles."
+    },
+    {
+      "id": 31,
+      "category": "Safe Road Behaviour",
+      "question": "If your toy or ball rolls out into a busy road, what should you do?",
+      "signSprite": "STOP",
+      "options": [
+        "Chuckle and run right after it",
+        "STOP at the curb and ask a parent or adult to help retrieve it",
+        "Wait for a car to run over it",
+        "Close your eyes and run"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Never chase objects into the street. Always stop at the curb and ask an adult for help."
+    },
+    {
+      "id": 32,
+      "category": "Safe Road Behaviour",
+      "question": "What is the golden rule sequence before stepping onto any road?",
+      "signSprite": "LOOK BOTH WAYS",
+      "options": [
+        "Run, jump, and skip",
+        "STOP, LOOK left-right-left, LISTEN for engines, and THINK if it is safe",
+        "Look at your shoes and walk",
+        "Whistle three times"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Remember: STOP, LOOK, LISTEN, and THINK before crossing any street!"
+    },
+    {
+      "id": 33,
+      "category": "Traffic Situations",
+      "question": "You arrive at a zebra crossing with a RED pedestrian signal. No cars are in sight. What should you do?",
+      "signSprite": "PEDESTRIAN RED",
+      "options": [
+        "Cross right away since no cars are visible",
+        "Wait patiently on the sidewalk until the pedestrian signal turns GREEN",
+        "Sprint across as fast as possible",
+        "Cross while looking at your phone"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Always obey traffic signals even if the road appears empty, as fast vehicles can appear suddenly."
+    },
+    {
+      "id": 34,
+      "category": "Traffic Situations",
+      "question": "When it is raining heavily and the road is wet, why must pedestrians be extra cautious?",
+      "signSprite": "RAIN ROAD",
+      "options": [
+        "Cars can fly in the rain",
+        "Wet roads make it harder for cars to stop quickly, and rain reduces visibility",
+        "Traffic lights stop working in rain",
+        "Zebra stripes wash away"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Rain reduces tire grip and driver visibility, so vehicles require longer distances to stop safely."
+    },
+    {
+      "id": 35,
+      "category": "Traffic Situations",
+      "question": "Why should you stay far back when a large truck or bus is turning at an intersection?",
+      "signSprite": "STOP",
+      "options": [
+        "Trucks are very loud",
+        "Large vehicles have wide turning radius and large blind spots where drivers cannot see you",
+        "Trucks throw candy when turning",
+        "Buses move backward when turning"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Large trucks require extra turning space and have big blind spots where pedestrians can be hidden."
+    },
+    {
+      "id": 36,
+      "category": "Traffic Situations",
+      "question": "Why is it unsafe to cross a road near a sharp curve or hill crest?",
+      "signSprite": "SHARP CURVE",
+      "options": [
+        "Hills make your feet tired",
+        "Drivers coming around the curve cannot see you in time to stop",
+        "Curved roads are only for race cars",
+        "Trees block the sunlight"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Curves and hills block the sightline. Always choose a straight, clear stretch of road with full visibility."
+    }
+  ]
+}

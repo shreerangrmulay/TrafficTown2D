@@ -276,43 +276,149 @@ namespace TrafficTown2D.Editor
 
         private static TrafficLightController CreateTrafficLight(Transform parent)
         {
-            GameObject root = FindOrCreateChild(parent, "TrafficLight");
-            root.transform.position = new Vector3(3.6f, 2.45f, 0f);
-            CreateWorldSprite(root.transform, "Post", new Vector3(0f, -0.9f, 0f), new Vector3(0.12f, 1.8f, 1f), new Color(0.2f, 0.22f, 0.25f, 1f), 3, false);
+            GameObject objectRoot = FindOrCreateChild(parent, "TrafficLight");
+            objectRoot.transform.position = new Vector3(3.6f, 2.45f, 0f);
+            RemoveUnexpectedTrafficLightChildren(objectRoot.transform);
 
-            GameObject body = CreateWorldSprite(root.transform, "TrafficLightBody", Vector3.zero, new Vector3(0.85f, 2.05f, 1f), TrafficLightBodyColor, 4, false);
-            body.GetComponent<SpriteRenderer>().sprite = EnsureTrafficLightSprite(TrafficLightBodySpritePath, false);
+            TrafficLightController controller = GetOrAdd(objectRoot, typeof(TrafficLightController)) as TrafficLightController;
+            SetFloat(controller, "redDuration", 5f);
+            SetFloat(controller, "greenDuration", 5f);
+            SetFloat(controller, "yellowDuration", 2f);
 
-            SpriteRenderer red = CreateSignalLight(root.transform, "RedLight", "Red", new Vector3(0f, 0.62f, -0.05f), Color.red);
-            SpriteRenderer yellow = CreateSignalLight(root.transform, "YellowLight", "Yellow", new Vector3(0f, 0f, -0.05f), Color.yellow);
-            SpriteRenderer green = CreateSignalLight(root.transform, "GreenLight", "Green", new Vector3(0f, -0.62f, -0.05f), Color.green);
-
-            TrafficLightController controller = GetOrAdd(root, typeof(TrafficLightController)) as TrafficLightController;
+            CreateTrafficLightBody(objectRoot.transform);
+            CreateTrafficLightSupport(objectRoot.transform);
+            SpriteRenderer red = CreateTrafficLightLens(objectRoot.transform, "RedLight", "Red", new Vector3(0f, 0.66f, 0f), Color.red, true);
+            SpriteRenderer yellow = CreateTrafficLightLens(objectRoot.transform, "YellowLight", "Yellow", new Vector3(0f, 0f, 0f), new Color(1f, 0.8f, 0f), false);
+            SpriteRenderer green = CreateTrafficLightLens(objectRoot.transform, "GreenLight", "Green", new Vector3(0f, -0.66f, 0f), Color.green, false);
             SetReference(controller, "redLight", red);
             SetReference(controller, "yellowLight", yellow);
             SetReference(controller, "greenLight", green);
             return controller;
         }
 
+        private static void CreateTrafficLightBody(Transform parent)
+        {
+            GameObject body = FindOrCreateChild(parent, "TrafficLightBody");
+            Undo.RecordObject(body, "Configure traffic light body");
+            body.transform.localPosition = Vector3.zero;
+            body.transform.localScale = new Vector3(0.95f, 2.45f, 1f);
+            RemoveMeshVisuals(body);
+
+            SpriteRenderer renderer = GetOrAdd(body, typeof(SpriteRenderer)) as SpriteRenderer;
+            Undo.RecordObject(renderer, "Configure traffic light body sprite");
+            renderer.sprite = EnsureTrafficLightSprite(TrafficLightBodySpritePath, false);
+            renderer.color = TrafficLightBodyColor;
+            renderer.sortingOrder = 20;
+        }
+
+        private static void CreateTrafficLightSupport(Transform parent)
+        {
+            CreateWorldSprite(parent, "TrafficLightPost", new Vector3(0f, -1.78f, 0f), new Vector3(0.13f, 1.55f, 1f), new Color(0.14f, 0.15f, 0.16f, 1f), 18, false);
+            CreateWorldSprite(parent, "TrafficLightBase", new Vector3(0f, -2.58f, 0f), new Vector3(0.72f, 0.13f, 1f), new Color(0.14f, 0.15f, 0.16f, 1f), 18, false);
+        }
+
+        private static SpriteRenderer CreateTrafficLightLens(Transform parent, string name, string legacyName, Vector3 position, Color color, bool active)
+        {
+            Transform lensTransform = parent.Find(name);
+            if (lensTransform == null && !string.IsNullOrEmpty(legacyName))
+            {
+                lensTransform = parent.Find(legacyName);
+                if (lensTransform != null) lensTransform.name = name;
+            }
+
+            GameObject lensObject = lensTransform == null ? new GameObject(name) : lensTransform.gameObject;
+            if (lensTransform == null) lensObject.transform.SetParent(parent);
+            Undo.RecordObject(lensObject, "Configure traffic light lens");
+            lensObject.transform.localPosition = position;
+            lensObject.transform.localScale = new Vector3(0.42f, 0.42f, 1f);
+            RemoveMeshVisuals(lensObject);
+            ClearChildren(lensObject.transform);
+
+            SpriteRenderer spriteRenderer = GetOrAdd(lensObject, typeof(SpriteRenderer)) as SpriteRenderer;
+            Undo.RecordObject(spriteRenderer, "Configure traffic light lens sprite");
+            spriteRenderer.sprite = EnsureTrafficLightSprite(TrafficLightLensSpritePath, true);
+            spriteRenderer.color = WithAlpha(color, active ? 1f : 0.15f);
+            spriteRenderer.sortingOrder = 21;
+            CreateWorldSprite(lensObject.transform, "Rim", Vector3.zero, new Vector3(1.18f, 1.18f, 1f), new Color(0.01f, 0.012f, 0.014f, 1f), 20, true);
+            SpriteRenderer glow = CreateWorldSprite(lensObject.transform, "Glow", Vector3.zero, new Vector3(1.48f, 1.48f, 1f), WithAlpha(color, active ? 0.28f : 0f), 19, true).GetComponent<SpriteRenderer>();
+            SpriteGlowFollower glowFollower = GetOrAdd(lensObject, typeof(SpriteGlowFollower)) as SpriteGlowFollower;
+            SetReference(glowFollower, "source", spriteRenderer);
+            SetReference(glowFollower, "glow", glow);
+            return spriteRenderer;
+        }
+
+        private static void RemoveUnexpectedTrafficLightChildren(Transform trafficLight)
+        {
+            RenameLegacyTrafficLightChild(trafficLight, "Red", "RedLight");
+            RenameLegacyTrafficLightChild(trafficLight, "Yellow", "YellowLight");
+            RenameLegacyTrafficLightChild(trafficLight, "Green", "GreenLight");
+
+            HashSet<string> keptNames = new HashSet<string>();
+            for (int childIndex = trafficLight.childCount - 1; childIndex >= 0; childIndex--)
+            {
+                Transform child = trafficLight.GetChild(childIndex);
+                bool expected = child.name == "TrafficLightBody" || child.name == "RedLight" || child.name == "YellowLight" || child.name == "GreenLight";
+                if (!expected || keptNames.Contains(child.name))
+                {
+                    Undo.DestroyObjectImmediate(child.gameObject);
+                    continue;
+                }
+
+                keptNames.Add(child.name);
+            }
+        }
+
+        private static void RenameLegacyTrafficLightChild(Transform parent, string legacyName, string canonicalName)
+        {
+            Transform canonical = parent.Find(canonicalName);
+            Transform legacy = parent.Find(legacyName);
+            if (canonical == null && legacy != null)
+            {
+                legacy.name = canonicalName;
+            }
+        }
+
+        private static Color WithAlpha(Color color, float alpha)
+        {
+            return new Color(color.r, color.g, color.b, alpha);
+        }
+
+        private static void RemoveMeshVisuals(GameObject objectRoot)
+        {
+            MeshRenderer meshRenderer = objectRoot.GetComponent<MeshRenderer>();
+            if (meshRenderer != null)
+            {
+                Undo.DestroyObjectImmediate(meshRenderer);
+            }
+
+            MeshFilter meshFilter = objectRoot.GetComponent<MeshFilter>();
+            if (meshFilter != null)
+            {
+                Undo.DestroyObjectImmediate(meshFilter);
+            }
+        }
+
         private static PedestrianSignalController CreatePedestrianSignal(Transform parent, TrafficLightController light)
         {
             GameObject root = FindOrCreateChild(parent, "PedestrianSignal");
-            root.transform.position = new Vector3(-3.6f, 2.45f, 0f);
+            root.transform.position = new Vector3(-3.05f, 2.25f, 0f);
             ClearChildren(root.transform);
-
-            CreateWorldSprite(root.transform, "Post", new Vector3(0f, -0.7f, 0f), new Vector3(0.1f, 1.4f, 1f), new Color(0.2f, 0.22f, 0.25f, 1f), 3, false);
-            GameObject body = CreateWorldSprite(root.transform, "SignalBody", Vector3.zero, new Vector3(0.75f, 1.45f, 1f), TrafficLightBodyColor, 4, false);
-            body.GetComponent<SpriteRenderer>().sprite = EnsureTrafficLightSprite(TrafficLightBodySpritePath, false);
-
-            SpriteRenderer dontWalk = CreateSignalLight(root.transform, "DontWalkLight", string.Empty, new Vector3(0f, 0.35f, -0.05f), new Color(0.92f, 0.2f, 0.2f, 1f));
-            SpriteRenderer walk = CreateSignalLight(root.transform, "WalkLight", string.Empty, new Vector3(0f, -0.35f, -0.05f), new Color(0.2f, 0.85f, 0.3f, 1f));
-
-            PedestrianSignalController controller = GetOrAdd(root, typeof(PedestrianSignalController)) as PedestrianSignalController;
-            SetReference(controller, "trafficLight", light);
-            SetReference(controller, "signalRenderer", body.GetComponent<SpriteRenderer>());
-            SetReference(controller, "dontWalkRenderer", dontWalk);
-            SetReference(controller, "walkRenderer", walk);
-            return controller;
+            PedestrianSignalController signal = GetOrAdd(root, typeof(PedestrianSignalController)) as PedestrianSignalController;
+            SetReference(signal, "trafficLight", light);
+            CreateWorldSprite(root.transform, "Housing", new Vector3(0f, 0f, 0f), new Vector3(1.25f, 1.45f, 1f), new Color(0.06f, 0.065f, 0.07f, 1f), 18, false);
+            CreateWorldSprite(root.transform, "Post", new Vector3(0f, -1.2f, 0f), new Vector3(0.12f, 1.0f, 1f), new Color(0.14f, 0.15f, 0.16f, 1f), 17, false);
+            CreateWorldSprite(root.transform, "Base", new Vector3(0f, -1.72f, 0f), new Vector3(0.72f, 0.12f, 1f), new Color(0.14f, 0.15f, 0.16f, 1f), 17, false);
+            SpriteRenderer signalRenderer = CreateWorldSprite(root.transform, "Signal", new Vector3(0f, 0f, 0f), new Vector3(1.05f, 1.15f, 1f), new Color(0.19f, 0.05f, 0.04f, 1f), 19, false).GetComponent<SpriteRenderer>();
+            SpriteRenderer walkRenderer = CreateWorldSprite(root.transform, "WalkLight", new Vector3(0f, 0.34f, 0f), new Vector3(0.85f, 0.34f, 1f), new Color(0.2f, 0.8f, 0.35f, 1f), 20, false).GetComponent<SpriteRenderer>();
+            SpriteRenderer dontWalkRenderer = CreateWorldSprite(root.transform, "DontWalkLight", new Vector3(0f, -0.34f, 0f), new Vector3(0.85f, 0.34f, 1f), new Color(0.19f, 0.05f, 0.04f, 1f), 20, false).GetComponent<SpriteRenderer>();
+            PedestrianSignalVisual visual = GetOrAdd(root, typeof(PedestrianSignalVisual)) as PedestrianSignalVisual;
+            SetReference(visual, "signal", signal);
+            SetReference(visual, "walkLabel", null);
+            SetReference(visual, "dontWalkLabel", null);
+            SetReference(signal, "signalRenderer", signalRenderer);
+            SetReference(signal, "walkRenderer", walkRenderer);
+            SetReference(signal, "dontWalkRenderer", dontWalkRenderer);
+            return signal;
         }
 
         private static GameObject CreatePlayer()
@@ -370,16 +476,14 @@ namespace TrafficTown2D.Editor
             RectTransform gameplayHudRect = EnsureRectTransform(gameplayHud);
             SetRect(gameplayHudRect, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
 
-            GameObject missionCard = CreateUIPanel(gameplayHud.transform, "MissionCard", new Color(0.10f, 0.15f, 0.22f, 0.88f), roundedPanelSprite);
-            SetRect(missionCard.GetComponent<RectTransform>(), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(170f, -48f), new Vector2(300f, 68f));
-            CreateUIText(missionCard.transform, "Title", "MISSION", 13, TextAlignmentOptions.Left, new Vector2(270f, 20f), new Vector2(10f, 16f), new Vector2(0f, 0.5f)).color = new Color(0.55f, 0.76f, 0.98f, 1f);
-            TextMeshProUGUI objective = CreateUIText(missionCard.transform, "Objective", "Cross the road safely by checking BOTH directions.", 14, TextAlignmentOptions.Left, new Vector2(270f, 32f), new Vector2(10f, -10f), new Vector2(0f, 0.5f));
-            objective.color = Color.white;
+            GameObject oldMissionCard = GameObject.Find("MissionCard");
+            if (oldMissionCard != null) Undo.DestroyObjectImmediate(oldMissionCard);
 
-            GameObject scoreCard = CreateUIPanel(gameplayHud.transform, "ScoreCard", new Color(0.10f, 0.15f, 0.22f, 0.88f), roundedPanelSprite);
-            SetRect(scoreCard.GetComponent<RectTransform>(), new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-110f, -48f), new Vector2(180f, 68f));
-            CreateUIText(scoreCard.transform, "Title", "⭐ SCORE", 13, TextAlignmentOptions.Right, new Vector2(150f, 20f), new Vector2(-10f, 16f), new Vector2(1f, 0.5f)).color = new Color(1f, 0.82f, 0.28f, 1f);
-            TextMeshProUGUI scoreText = CreateUIText(scoreCard.transform, "Value", "100", 24, TextAlignmentOptions.Right, new Vector2(150f, 32f), new Vector2(-10f, -10f), new Vector2(1f, 0.5f));
+            // Score Card (Sleek dark glass panel, text centered cleanly inside the block)
+            GameObject scoreCard = CreateUIPanel(gameplayHud.transform, "ScoreCard", new Color(0.08f, 0.12f, 0.18f, 0.90f), roundedPanelSprite);
+            SetRect(scoreCard.GetComponent<RectTransform>(), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(400f, -48f), new Vector2(180f, 70f));
+            CreateUIText(scoreCard.transform, "Title", "⭐ SCORE", 13, TextAlignmentOptions.Center, new Vector2(160f, 20f), new Vector2(0f, 14f), new Vector2(0.5f, 0.5f)).color = new Color(1f, 0.82f, 0.28f, 1f);
+            TextMeshProUGUI scoreText = CreateUIText(scoreCard.transform, "Value", "100", 26, TextAlignmentOptions.Center, new Vector2(160f, 32f), new Vector2(0f, -12f), new Vector2(0.5f, 0.5f));
             scoreText.color = Color.white;
             scoreText.fontStyle = FontStyles.Bold;
 
@@ -454,16 +558,20 @@ namespace TrafficTown2D.Editor
             ratingLabel.color = new Color(0.11f, 0.15f, 0.20f, 1f);
             ratingLabel.fontStyle = FontStyles.Bold;
 
-            Button backButton = GetOrAddChildButton(completionCard.transform, "BackToMenuButton", "BACK TO MENU", new Vector2(-105f, -175f), roundedPanelSprite);
-            RectTransform backRect = backButton.GetComponent<RectTransform>();
-            backRect.sizeDelta = new Vector2(190f, 50f);
+            Button retryButton = GetOrAddChildButton(completionCard.transform, "RetryButton", "RETRY", new Vector2(-145f, -175f), roundedPanelSprite);
+            RectTransform retryRect = retryButton.GetComponent<RectTransform>();
+            retryRect.sizeDelta = new Vector2(130f, 46f);
 
-            Button nextButton = GetOrAddChildButton(completionCard.transform, "NextLevelButton", "NEXT LEVEL", new Vector2(105f, -175f), roundedPanelSprite);
+            Button nextButton = GetOrAddChildButton(completionCard.transform, "NextLevelButton", "NEXT LEVEL", new Vector2(0f, -175f), roundedPanelSprite);
             RectTransform nextRect = nextButton.GetComponent<RectTransform>();
-            nextRect.sizeDelta = new Vector2(190f, 50f);
+            nextRect.sizeDelta = new Vector2(130f, 46f);
+
+            Button backButton = GetOrAddChildButton(completionCard.transform, "BackToMenuButton", "MAIN MENU", new Vector2(145f, -175f), roundedPanelSprite);
+            RectTransform backRect = backButton.GetComponent<RectTransform>();
+            backRect.sizeDelta = new Vector2(130f, 46f);
 
             LevelUIController ui = GetOrAdd(gameplayHud, typeof(LevelUIController)) as LevelUIController;
-            SetReference(ui, "objectiveText", objective);
+            SetReference(ui, "objectiveText", null);
             SetReference(ui, "scoreText", scoreText);
             SetReference(ui, "completionPanel", overlay);
             SetReference(ui, "completionGroup", completionGroup);
@@ -473,13 +581,15 @@ namespace TrafficTown2D.Editor
             SetReference(ui, "mistakesText", mistakes);
             SetReference(ui, "ratingStarsText", ratingStars);
             SetReference(ui, "ratingText", ratingLabel);
-            SetReference(ui, "backButton", backButton);
+            SetReference(ui, "retryButton", retryButton);
             SetReference(ui, "nextButton", nextButton);
+            SetReference(ui, "backButton", backButton);
             SetReference(ui, "scoreManager", score);
             SetReference(ui, "sceneLoader", Object.FindAnyObjectByType<SceneLoader>());
 
-            UnityEventTools.AddPersistentListener(backButton.onClick, ui.BackToMenu);
+            UnityEventTools.AddPersistentListener(retryButton.onClick, ui.RestartCurrentLevel);
             UnityEventTools.AddPersistentListener(nextButton.onClick, ui.LoadNextOrReplay);
+            UnityEventTools.AddPersistentListener(backButton.onClick, ui.BackToMenu);
 
             gameplayHud.SetActive(true);
             overlay.SetActive(false);

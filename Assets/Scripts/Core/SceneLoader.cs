@@ -8,6 +8,7 @@ namespace TrafficTown2D.Core
         public static SceneLoader Instance { get; private set; }
 
         public const string MainMenuSceneName = "MainMenu";
+        public const string QuizSceneName = "Quiz";
         public const string FirstLevelSceneName = "Level1";
         public const string SecondLevelSceneName = "Level2";
         public const string ThirdLevelSceneName = "Level3";
@@ -70,6 +71,12 @@ namespace TrafficTown2D.Core
                 GameManager.Instance.SetState(GameState.MainMenu);
             }
             LoadScene(MainMenuSceneName);
+        }
+
+        public void LoadQuiz()
+        {
+            Time.timeScale = 1f;
+            LoadScene(QuizSceneName);
         }
 
         /// <summary>Load a level by its 1-based number (1–10).</summary>

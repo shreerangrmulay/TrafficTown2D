@@ -21,6 +21,7 @@ namespace TrafficTown2D.UI
         [SerializeField] private TMP_Text ratingText;
         [SerializeField] private Button backButton;
         [SerializeField] private Button nextButton;
+        [SerializeField] private Button retryButton;
         [SerializeField] private ScoreManager scoreManager;
         [SerializeField] private SceneLoader sceneLoader;
 
@@ -35,7 +36,20 @@ namespace TrafficTown2D.UI
 
         private void Awake()
         {
+            RemoveStaleMissionCard();
             HideCompletion();
+        }
+
+        private void RemoveStaleMissionCard()
+        {
+            GameObject[] allObjects = FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < allObjects.Length; i++)
+            {
+                if (allObjects[i] != null && allObjects[i].name == "MissionCard")
+                {
+                    Destroy(allObjects[i]);
+                }
+            }
         }
 
         private void OnEnable()
@@ -89,6 +103,14 @@ namespace TrafficTown2D.UI
                 RenameNextButton();
             }
 
+            ResolveRetryButton();
+            if (retryButton != null)
+            {
+                retryButton.interactable = true;
+                retryButton.onClick.RemoveListener(RestartCurrentLevel);
+                retryButton.onClick.AddListener(RestartCurrentLevel);
+            }
+
             HideCompletion();
             UpdateScore(scoreManager != null ? scoreManager.CurrentScore : 0);
         }
@@ -119,6 +141,12 @@ namespace TrafficTown2D.UI
                 nextButton.interactable = true;
             }
 
+            if (retryButton != null)
+            {
+                retryButton.gameObject.SetActive(true);
+                retryButton.interactable = true;
+            }
+
             completionPanel.SetActive(true);
             completionPanel.transform.SetAsLastSibling();
             if (completionRoutine != null) StopCoroutine(completionRoutine);
@@ -141,6 +169,7 @@ namespace TrafficTown2D.UI
             }
 
             if (nextButton != null) nextButton.gameObject.SetActive(false);
+            if (retryButton != null) retryButton.gameObject.SetActive(false);
 
             completionPanel.SetActive(true);
             completionPanel.transform.SetAsLastSibling();
@@ -406,6 +435,61 @@ namespace TrafficTown2D.UI
             }
         }
 
+        private void ResolveRetryButton()
+        {
+            if (retryButton == null)
+            {
+                Button[] buttons = FindObjectsByType<Button>(FindObjectsInactive.Include);
+                for (int index = 0; index < buttons.Length; index++)
+                {
+                    if (buttons[index].gameObject.scene == gameObject.scene && (buttons[index].name == "RetryButton" || buttons[index].name == "ReplayButton"))
+                    {
+                        retryButton = buttons[index];
+                        break;
+                    }
+                }
+            }
+
+            if (retryButton == null && backButton != null)
+            {
+                retryButton = Instantiate(backButton, backButton.transform.parent);
+                retryButton.name = "RetryButton";
+                retryButton.onClick = new Button.ButtonClickedEvent();
+
+                RectTransform backRect = backButton.GetComponent<RectTransform>();
+                RectTransform nextRect = nextButton != null ? nextButton.GetComponent<RectTransform>() : null;
+                RectTransform retryRect = retryButton.GetComponent<RectTransform>();
+
+                if (backRect != null && retryRect != null)
+                {
+                    float buttonY = backRect.anchoredPosition.y;
+                    float btnWidth = 130f;
+                    float btnHeight = 46f;
+
+                    retryRect.anchoredPosition = new Vector2(-145f, buttonY);
+                    retryRect.sizeDelta = new Vector2(btnWidth, btnHeight);
+
+                    if (nextRect != null)
+                    {
+                        nextRect.anchoredPosition = new Vector2(0f, buttonY);
+                        nextRect.sizeDelta = new Vector2(btnWidth, btnHeight);
+                    }
+
+                    backRect.anchoredPosition = new Vector2(145f, buttonY);
+                    backRect.sizeDelta = new Vector2(btnWidth, btnHeight);
+                }
+
+                SetButtonLabel(retryButton, "RETRY");
+            }
+
+            if (retryButton != null)
+            {
+                retryButton.onClick.RemoveListener(RestartCurrentLevel);
+                retryButton.onClick.AddListener(RestartCurrentLevel);
+                SetButtonLabel(retryButton, "RETRY");
+            }
+        }
+
         private static string FormatObjective(bool done, string label)
         {
             return (done ? "[x] " : "[ ] ") + label;
@@ -429,6 +513,7 @@ namespace TrafficTown2D.UI
             if (completionCard != null) completionCard.localScale = Vector3.one * 0.9f;
             if (backButton != null) backButton.interactable = false;
             if (nextButton != null) nextButton.interactable = false;
+            if (retryButton != null) retryButton.interactable = false;
             if (completionPanel != null) completionPanel.SetActive(false);
         }
 
@@ -447,6 +532,7 @@ namespace TrafficTown2D.UI
             if (completionCard != null) completionCard.localScale = Vector3.one * 0.9f;
             if (backButton != null) backButton.interactable = false;
             if (nextButton != null) nextButton.interactable = false;
+            if (retryButton != null) retryButton.interactable = false;
 
             while (elapsed < duration)
             {
@@ -468,6 +554,7 @@ namespace TrafficTown2D.UI
             if (completionCard != null) completionCard.localScale = Vector3.one;
             if (backButton != null) backButton.interactable = true;
             if (nextButton != null) nextButton.interactable = true;
+            if (retryButton != null) retryButton.interactable = true;
             completionRoutine = null;
         }
     }
