@@ -11,6 +11,7 @@ namespace TrafficTown2D.UI
 
         [SerializeField] private SceneLoader sceneLoader;
         [SerializeField] private Text messageText;
+        [SerializeField] private TMPro.TMP_Text messageTextTmp;
         [SerializeField] private GameObject levelSelectPanel;
         [SerializeField] private GameObject mainMenuContent;
 
@@ -143,6 +144,10 @@ namespace TrafficTown2D.UI
 
         private void ShowMessage(string message)
         {
+            if (messageTextTmp != null)
+            {
+                messageTextTmp.text = message;
+            }
             if (messageText != null)
             {
                 messageText.text = message;

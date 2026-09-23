@@ -576,8 +576,21 @@ namespace TrafficTown2D.UI
 
         private void Awake()
         {
-            rectTransform = GetComponent<RectTransform>();
+            if (rectTransform == null) rectTransform = GetComponent<RectTransform>();
             if (targetImage == null) targetImage = GetComponent<Image>();
+            Apply(1f, normalColor);
+        }
+
+        public void Configure(Color normal, Color hover, Color pressed, float hScale = 1.04f, float pScale = 0.96f, Image img = null)
+        {
+            if (rectTransform == null) rectTransform = GetComponent<RectTransform>();
+            normalColor = normal;
+            hoverColor = hover;
+            pressedColor = pressed;
+            hoverScale = hScale;
+            pressedScale = pScale;
+            if (img != null) targetImage = img;
+            else if (targetImage == null) targetImage = GetComponent<Image>();
             Apply(1f, normalColor);
         }
 
