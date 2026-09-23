@@ -1,5 +1,6 @@
 // This file is excluded from player builds and runs only from the Unity Editor menu.
 #if UNITY_EDITOR
+using System.IO;
 using UnityEditor;
 using UnityEditor.Events;
 using UnityEditor.SceneManagement;
@@ -33,6 +34,25 @@ namespace TrafficTown2D.Editor
             if (EditorApplication.isPlaying)
             {
                 EditorApplication.isPlaying = false;
+            }
+        }
+
+        private const string AutoRunSplashPrefKey = "TrafficTown_MainMenu_Splash_v2";
+
+        [InitializeOnLoadMethod]
+        private static void AutoSetupSplashOnce()
+        {
+            if (!EditorPrefs.GetBool(AutoRunSplashPrefKey, false))
+            {
+                EditorPrefs.SetBool(AutoRunSplashPrefKey, true);
+                EditorApplication.delayCall += () =>
+                {
+                    if (!EditorApplication.isPlaying)
+                    {
+                        Debug.Log("[MainMenuSetup] Auto-running SetupMainMenu for Made with Unity splash screen...");
+                        SetupMainMenu();
+                    }
+                };
             }
         }
 
@@ -88,6 +108,12 @@ namespace TrafficTown2D.Editor
 
             GameObject levelSelect = CreateLevelSelectModal(canvas.transform, controller);
             levelSelect.transform.SetAsLastSibling();
+
+            GameObject splash = CreateMadeWithUnitySplashScreen(canvas.transform);
+            splash.transform.SetAsLastSibling();
+
+            PlayerSettings.SplashScreen.show = true;
+            PlayerSettings.SplashScreen.showUnityLogo = true;
 
             AssignControllerReferences(controller, sceneLoader, messageText, levelSelect, mainMenuContent);
             EnsureBuildSettingsScenes();
@@ -322,9 +348,9 @@ namespace TrafficTown2D.Editor
                 "Safe Crossing",
                 "Smart Crossing",
                 "Yield Right",
-                "Bike Lane",
-                "Stop Sign",
-                "One-Way",
+                "Night Driving",
+                "Traffic Controller",
+                "Extreme Roads 🌧️",
                 "School Zone",
                 "Emergency",
                 "Roundabout",
@@ -472,6 +498,66 @@ namespace TrafficTown2D.Editor
             {
                 camera.gameObject.AddComponent<AudioListener>();
             }
+        }
+
+        private static GameObject CreateMadeWithUnitySplashScreen(Transform parent)
+        {
+            if (!File.Exists(UnityLogoAssetCreator.UnityLogoPath))
+            {
+                UnityLogoAssetCreator.GenerateLogoPng();
+            }
+
+            GameObject splashObj = FindOrCreateChild(parent, "MadeWithUnitySplashScreen");
+            RectTransform splashRect = GetOrAdd<RectTransform>(splashObj);
+            SetFullScreen(splashRect);
+
+            // Deep sleek black background (#0A0B0F)
+            Image bg = GetOrAdd<Image>(splashObj);
+            bg.color = new Color(0.04f, 0.05f, 0.07f, 1f);
+            bg.raycastTarget = true;
+
+            CanvasGroup cg = GetOrAdd<CanvasGroup>(splashObj);
+            cg.alpha = 0f;
+            cg.blocksRaycasts = true;
+
+            // Centered Content container
+            GameObject content = FindOrCreateChild(splashObj.transform, "Content");
+            RectTransform contentRect = GetOrAdd<RectTransform>(content);
+            SetRect(contentRect, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(500f, 320f));
+
+            // Unity Logo Image
+            GameObject logoObj = FindOrCreateChild(content.transform, "UnityLogo");
+            RectTransform logoRect = GetOrAdd<RectTransform>(logoObj);
+            SetRect(logoRect, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 40f), new Vector2(160f, 160f));
+
+            Image logoImg = GetOrAdd<Image>(logoObj);
+            Sprite logoSprite = AssetDatabase.LoadAssetAtPath<Sprite>(UnityLogoAssetCreator.UnityLogoPath);
+            if (logoSprite != null)
+            {
+                logoImg.sprite = logoSprite;
+            }
+            logoImg.color = Color.white;
+            logoImg.preserveAspect = true;
+            logoImg.raycastTarget = false;
+
+            // "Made with Unity" Text
+            GameObject textObj = FindOrCreateChild(content.transform, "MadeWithText");
+            RectTransform textRect = GetOrAdd<RectTransform>(textObj);
+            SetRect(textRect, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -80f), new Vector2(480f, 50f));
+
+            Text txt = GetOrAdd<Text>(textObj);
+            txt.text = "Made with Unity";
+            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            txt.fontSize = 32;
+            txt.fontStyle = FontStyle.Bold;
+            txt.alignment = TextAnchor.MiddleCenter;
+            txt.color = new Color(0.96f, 0.96f, 0.96f, 1f);
+            txt.raycastTarget = false;
+
+            UnitySplashScreen splashComp = GetOrAdd<UnitySplashScreen>(splashObj);
+            splashComp.Configure(cg, contentRect, logoImg, txt, 0.2f, 0.8f, 1.8f, 0.7f, true, true, false, "MainMenu");
+
+            return splashObj;
         }
     }
 }

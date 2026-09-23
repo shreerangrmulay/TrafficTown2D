@@ -12,6 +12,7 @@ namespace TrafficTown2D.Editor
     {
         public static readonly string[] AllProjectScenePaths = new[]
         {
+            "Assets/Scenes/SplashScreen.unity",
             "Assets/Scenes/MainMenu.unity",
             "Assets/Scenes/Quiz.unity",
             "Assets/Scenes/Level1.unity",

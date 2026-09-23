@@ -7,6 +7,7 @@ namespace TrafficTown2D.Core
     {
         public static SceneLoader Instance { get; private set; }
 
+        public const string SplashScreenSceneName = "SplashScreen";
         public const string MainMenuSceneName = "MainMenu";
         public const string QuizSceneName = "Quiz";
         public const string FirstLevelSceneName = "Level1";
@@ -119,6 +120,11 @@ namespace TrafficTown2D.Core
         public void LoadLevel3()
         {
             LoadLevelByNumber(3);
+        }
+
+        public void LoadLevel4()
+        {
+            LoadLevelByNumber(4);
         }
 
         public void ReloadCurrentLevel()

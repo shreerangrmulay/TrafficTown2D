@@ -24,6 +24,12 @@ namespace TrafficTown2D.Level3
             set => currentSpeedLimitKmh = Mathf.Max(5f, value);
         }
 
+        public float BrakingRate
+        {
+            get => brakingRate;
+            set => brakingRate = Mathf.Max(1f, value);
+        }
+
         [Header("Visual Elements")]
         [SerializeField] private SpriteRenderer[] brakeLights;
         [SerializeField] private SpriteRenderer[] headlights;
