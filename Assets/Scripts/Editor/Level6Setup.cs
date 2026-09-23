@@ -26,7 +26,7 @@ namespace TrafficTown2D.Editor
         private const string RainDropPath = "Assets/Sprites/Environment/RainDrop.png";
         private const string RainMaterialPath = "Assets/Materials/RainMaterial.mat";
 
-        private const string AutoRunPrefKey = "TrafficTown_Level6_AutoSetup_v1";
+        private const string AutoRunPrefKey = "TrafficTown_Level6_AutoSetup_v2";
 
         [InitializeOnLoadMethod]
         private static void AutoSetupOnce()
@@ -286,13 +286,44 @@ namespace TrafficTown2D.Editor
             CreateWorldSprite(roadsContainer.transform, "WestLogistics_Pad", new Vector3(-42f, 25f, 0f), new Vector3(10f, 10f, 1f), new Color(0.22f, 0.25f, 0.28f, 1f), 0);
             CreateWorldSprite(roadsContainer.transform, "WestLogistics_CurbW", new Vector3(-47.18f, 25f, 0f), new Vector3(0.35f, 10.4f, 1f), curbCol, 1);
 
-            // Roundabout North Leg connecting to Northern Expressway: from (-15, 36.5) to (-15, 41.4)
-            CreateRoadSegment(roadsContainer.transform, "Road_Roundabout_NorthArm", new Vector3(-15f, 38.95f, 0f), new Vector2(7.2f, 4.9f), 0f, roadCol, curbCol, yellowLineCol, whiteLineCol, shoulderCol);
+            // Structure 7a: Roundabout North Leg connecting north towards expressway: from Y = 36.5 to Y = 41.4 (length 4.9, width 7.2)
+            CreateRoadSegment(roadsContainer.transform, "Road_Roundabout_NorthArm", new Vector3(-15f, 38.95f, 0f), new Vector2(7.2f, 4.9f), 0f, roadCol, curbCol, yellowLineCol, whiteLineCol, shoulderCol, isHorizontal: false, hasCurb1: true, hasCurb2: true);
 
-            // Structure 7: Northern Expressway from (-15, 45) to (48, 45) (width 7.2, length 63)
-            // Note: Top curb is continuous; Bottom curb has 15m gap for U-Turn mouth between X=22.5 and X=37.5
-            CreateRoadSegment(roadsContainer.transform, "Road_Northern_Expressway", new Vector3(16.5f, 45f, 0f), new Vector2(63f, 7.2f), 0f, roadCol, curbCol, yellowLineCol, whiteLineCol, shoulderCol, isHorizontal: true, hasCurb1: true, hasCurb2: false);
-            CreateWorldSprite(roadsContainer.transform, "Exp_BottomCurb_West", new Vector3(3.75f, 41.22f, 0f), new Vector3(37.5f, 0.35f, 1f), curbCol, 1);
+            // Structure 7b: NW 90-Degree Corner connecting Roundabout North Arm (-15, 41.4) to Northern Expressway (-11.4, 45)
+            CreateWorldSprite(roadsContainer.transform, "Corner_NW_Shoulder", new Vector3(-15f, 45f, 0f), new Vector3(8.6f, 8.6f, 1f), shoulderCol, -2);
+            CreateWorldSprite(roadsContainer.transform, "Corner_NW_Pad", new Vector3(-15f, 45f, 0f), new Vector3(7.4f, 7.4f, 1f), roadCol, 0);
+            CreateWorldSprite(roadsContainer.transform, "Corner_NW_TopCurb", new Vector3(-15f, 48.78f, 0f), new Vector3(7.4f, 0.35f, 1f), curbCol, 1);
+            CreateWorldSprite(roadsContainer.transform, "Corner_NW_LeftCurb", new Vector3(-18.78f, 45f, 0f), new Vector3(0.35f, 7.4f, 1f), curbCol, 1);
+            CreateWorldSprite(roadsContainer.transform, "Corner_NW_InnerCurb", new Vector3(-11.22f, 41.22f, 0f), new Vector3(0.35f, 0.35f, 1f), curbCol, 1);
+
+            // Smooth 90-degree curved double yellow line through the NW Corner
+            int cornerSteps = 10;
+            Vector2 arcCenter = new Vector2(-11.4f, 41.4f);
+            float arcRadius = 3.6f;
+            Vector2 pPrev = arcCenter + new Vector2(Mathf.Cos(180f * Mathf.Deg2Rad) * arcRadius, Mathf.Sin(180f * Mathf.Deg2Rad) * arcRadius);
+            for (int i = 1; i <= cornerSteps; i++)
+            {
+                float angle = Mathf.Lerp(180f, 90f, i / (float)cornerSteps);
+                float rad = angle * Mathf.Deg2Rad;
+                Vector2 pCurr = arcCenter + new Vector2(Mathf.Cos(rad) * arcRadius, Mathf.Sin(rad) * arcRadius);
+                Vector2 mid = (pPrev + pCurr) * 0.5f;
+                Vector2 dir = pCurr - pPrev;
+                float len = dir.magnitude;
+                float rotZ = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+
+                Vector3 perp = (Vector3)(Vector2.Perpendicular(dir.normalized) * 0.10f);
+                GameObject line1 = CreateWorldSprite(roadsContainer.transform, $"NW_CenterLine1_{i}", new Vector3(mid.x, mid.y, 0f) + perp, new Vector3(len + 0.05f, 0.10f, 1f), yellowLineCol, 2);
+                line1.transform.rotation = Quaternion.Euler(0f, 0f, rotZ);
+                GameObject line2 = CreateWorldSprite(roadsContainer.transform, $"NW_CenterLine2_{i}", new Vector3(mid.x, mid.y, 0f) - perp, new Vector3(len + 0.05f, 0.10f, 1f), yellowLineCol, 2);
+                line2.transform.rotation = Quaternion.Euler(0f, 0f, rotZ);
+
+                pPrev = pCurr;
+            }
+
+            // Structure 7c: Northern Expressway from X = -11.4 to X = 48.0 (width 7.2, length 59.4, center X = 18.3)
+            // Note: Top curb is continuous; Bottom curb has gap for U-Turn mouth between X=22.5 and X=37.5, and stops at X=-11.4 at inner corner
+            CreateRoadSegment(roadsContainer.transform, "Road_Northern_Expressway", new Vector3(18.3f, 45f, 0f), new Vector2(59.4f, 7.2f), 0f, roadCol, curbCol, yellowLineCol, whiteLineCol, shoulderCol, isHorizontal: true, hasCurb1: true, hasCurb2: false);
+            CreateWorldSprite(roadsContainer.transform, "Exp_BottomCurb_West", new Vector3(5.55f, 41.22f, 0f), new Vector3(33.9f, 0.35f, 1f), curbCol, 1);
             CreateWorldSprite(roadsContainer.transform, "Exp_BottomCurb_East", new Vector3(42.75f, 41.22f, 0f), new Vector3(10.5f, 0.35f, 1f), curbCol, 1);
 
             // Structure 8: Smooth Continuous U-Turn Loop at (30, 45)
@@ -508,9 +539,9 @@ namespace TrafficTown2D.Editor
             signsContainer.transform.position = Vector3.zero;
 
             // 1. Mission 1: SW Avenue Signs & Arrows
-            CreateSignboard(signsContainer.transform, "Sign_SpeedLimit_40", new Vector3(-41f, -38f, 0f), "SPEED LIMIT");
-            CreateSignboard(signsContainer.transform, "Sign_RainRoad", new Vector3(-41f, -34f, 0f), "RAIN ROAD");
-            CreateSignboard(signsContainer.transform, "Sign_SharpCurve_90", new Vector3(-41f, -22f, 0f), "SHARP CURVE");
+            CreateSignboard(signsContainer.transform, "Sign_SpeedLimit_40", new Vector3(-39.8f, -38f, 0f), "SPEED LIMIT");
+            CreateSignboard(signsContainer.transform, "Sign_RainRoad", new Vector3(-39.8f, -34f, 0f), "RAIN ROAD");
+            CreateSignboard(signsContainer.transform, "Sign_SharpCurve_90", new Vector3(-39.8f, -22f, 0f), "SHARP CURVE");
 
             CreateAsphaltArrow(signsContainer.transform, "Arrow_SW_Ahead", new Vector3(-45f, -36f, 0f), 0f);
             CreateAsphaltArrow(signsContainer.transform, "Arrow_SW_TurnRight", new Vector3(-45f, -22f, 0f), 0f, isTurnRight: true);
@@ -606,7 +637,7 @@ namespace TrafficTown2D.Editor
             GameObject boundsObj = FindOrCreateChild(world, "WorldBounds");
             boundsObj.transform.position = Vector3.zero;
 
-            // Outer perimeter walls at X = ±80, Y = ±60
+            // Outer perimeter walls at X = +/-80, Y = +/-60
             CreateBoundWall(boundsObj.transform, "Wall_North", new Vector3(0f, 60f, 0f), new Vector2(170f, 4f));
             CreateBoundWall(boundsObj.transform, "Wall_South", new Vector3(0f, -60f, 0f), new Vector2(170f, 4f));
             CreateBoundWall(boundsObj.transform, "Wall_East", new Vector3(80f, 0f, 0f), new Vector2(4f, 130f));
@@ -628,10 +659,11 @@ namespace TrafficTown2D.Editor
             CreateBoundWall(boundsObj.transform, "CurbCol_Detour_North", new Vector3(19f, 29.1f, 0f), new Vector2(40f, 0.8f));
 
             // Expressway North & South border colliders
-            CreateBoundWall(boundsObj.transform, "CurbCol_Expressway_North", new Vector3(16.5f, 49.1f, 0f), new Vector2(64f, 0.8f));
+            CreateBoundWall(boundsObj.transform, "CurbCol_Expressway_North", new Vector3(14.7f, 49.1f, 0f), new Vector2(67.6f, 0.8f));
             CreateBoundWall(boundsObj.transform, "CurbCol_Expressway_DeadEnd", new Vector3(48.5f, 45f, 0f), new Vector2(0.8f, 8f));
-            CreateBoundWall(boundsObj.transform, "CurbCol_Expressway_SouthWest", new Vector3(3.75f, 40.9f, 0f), new Vector2(37.5f, 0.8f));
+            CreateBoundWall(boundsObj.transform, "CurbCol_Expressway_SouthWest", new Vector3(5.55f, 40.9f, 0f), new Vector2(33.9f, 0.8f));
             CreateBoundWall(boundsObj.transform, "CurbCol_Expressway_SouthEast", new Vector3(42.75f, 40.9f, 0f), new Vector2(10.5f, 0.8f));
+            CreateBoundWall(boundsObj.transform, "CurbCol_NorthArm_Corner_Left", new Vector3(-19.1f, 42.8f, 0f), new Vector2(0.8f, 12.6f));
 
             // U-Turn Outer Arc Containment Wall
             CreateBoundWall(boundsObj.transform, "CurbCol_UTurn_OuterApex", new Vector3(30f, 29.8f, 0f), new Vector2(16f, 0.8f));
@@ -690,7 +722,7 @@ namespace TrafficTown2D.Editor
             tjCol.isTrigger = true;
             JunctionDetectionZone tjZone = GetOrAdd<JunctionDetectionZone>(tjZoneObj);
             SetReference(tjZone, "junctionName", "South-Central T-Junction");
-            SetReference(tjZone, "approachAdvice", "⊥ T-Junction ahead: Yield to cross traffic & slow down in rain!");
+            SetReference(tjZone, "approachAdvice", "[T-JUNCTION] T-Junction ahead: Yield to cross traffic & slow down in rain!");
         }
         #endregion
 
@@ -1010,10 +1042,10 @@ namespace TrafficTown2D.Editor
             TMP_Text mTitle = CreateUIText(missionCard.transform, "MissionTitle", "RAIN SLICK ROADS", 17f, TextAlignmentOptions.Left, new Vector2(430f, 26f), new Vector2(15f, -38f), new Vector2(0f, 1f));
             mTitle.fontStyle = FontStyles.Bold;
 
-            TMP_Text mObj = CreateUIText(missionCard.transform, "MissionObjective", "Control speed through the 90° turn and curved road.", 12.5f, TextAlignmentOptions.Left, new Vector2(430f, 44f), new Vector2(15f, -66f), new Vector2(0f, 1f));
+            TMP_Text mObj = CreateUIText(missionCard.transform, "MissionObjective", "Control speed through the 90-degree turn and curved road.", 12.5f, TextAlignmentOptions.Left, new Vector2(430f, 44f), new Vector2(15f, -66f), new Vector2(0f, 1f));
             mObj.color = new Color(0.85f, 0.88f, 0.92f, 1f);
 
-            TMP_Text mGps = CreateUIText(missionCard.transform, "GPSGuidance", "GPS: ↑ EAST DEPOT (85m)", 13.5f, TextAlignmentOptions.Left, new Vector2(430f, 24f), new Vector2(15f, -125f), new Vector2(0f, 1f));
+            TMP_Text mGps = CreateUIText(missionCard.transform, "GPSGuidance", "GPS: [^] EAST DEPOT (85m)", 13.5f, TextAlignmentOptions.Left, new Vector2(430f, 24f), new Vector2(15f, -125f), new Vector2(0f, 1f));
             mGps.fontStyle = FontStyles.Bold;
             mGps.color = new Color(1f, 0.9f, 0.3f, 1f);
 

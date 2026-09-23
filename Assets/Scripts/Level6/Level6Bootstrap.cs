@@ -41,12 +41,68 @@ namespace TrafficTown2D.Level6
             GameObject env = GameObject.Find("Environment");
             Level6PlayerCar existingCar = UnityEngine.Object.FindFirstObjectByType<Level6PlayerCar>();
 
-            if (env != null && existingCar != null && Level6MissionManager.Instance != null)
+            // 1. Clean up duplicate cars if any exist in the scene
+            Level6PlayerCar[] allCars = UnityEngine.Object.FindObjectsByType<Level6PlayerCar>(FindObjectsSortMode.None);
+            if (allCars.Length > 1)
             {
-                // Ensure camera follow is bound
-                Level6CameraFollow cf = cam.GetComponent<Level6CameraFollow>();
-                if (cf == null) cf = cam.gameObject.AddComponent<Level6CameraFollow>();
-                cf.SetTarget(existingCar.transform);
+                Debug.LogWarning($"[Level6Bootstrap] Duplicate cars detected ({allCars.Length}). Removing duplicates...");
+                for (int i = 1; i < allCars.Length; i++)
+                {
+                    UnityEngine.Object.DestroyImmediate(allCars[i].gameObject);
+                }
+                existingCar = allCars[0];
+            }
+
+            // 2. If Environment exists, the scene is already populated! Never duplicate it.
+            if (env != null)
+            {
+                // Self-heal: ensure NW corner pad is present in environment without destroying the scene!
+                Transform roads = env.transform.Find("RoadNetwork");
+                if (roads != null && roads.Find("Corner_NW_Pad") == null)
+                {
+                    Color roadCol = new Color(0.14f, 0.15f, 0.18f, 1f);
+                    Color curbCol = new Color(0.72f, 0.74f, 0.78f, 1f);
+                    Color shoulderCol = new Color(0.38f, 0.40f, 0.44f, 1f);
+                    Color yellowLineCol = new Color(1f, 0.88f, 0.18f, 0.95f);
+
+                    CreateSprite(roads, "Corner_NW_Shoulder", new Vector3(-15f, 45f, 0f), new Vector3(8.6f, 8.6f, 1f), shoulderCol, -2);
+                    CreateSprite(roads, "Corner_NW_Pad", new Vector3(-15f, 45f, 0f), new Vector3(7.4f, 7.4f, 1f), roadCol, 0);
+                    CreateSprite(roads, "Corner_NW_TopCurb", new Vector3(-15f, 48.78f, 0f), new Vector3(7.4f, 0.35f, 1f), curbCol, 1);
+                    CreateSprite(roads, "Corner_NW_LeftCurb", new Vector3(-18.78f, 45f, 0f), new Vector3(0.35f, 7.4f, 1f), curbCol, 1);
+                    CreateSprite(roads, "Corner_NW_InnerCurb", new Vector3(-11.22f, 41.22f, 0f), new Vector3(0.35f, 0.35f, 1f), curbCol, 1);
+
+                    // Add curved centerlines
+                    int cornerSteps = 10;
+                    Vector2 arcCenter = new Vector2(-11.4f, 41.4f);
+                    float arcRadius = 3.6f;
+                    Vector2 pPrev = arcCenter + new Vector2(Mathf.Cos(180f * Mathf.Deg2Rad) * arcRadius, Mathf.Sin(180f * Mathf.Deg2Rad) * arcRadius);
+                    for (int i = 1; i <= cornerSteps; i++)
+                    {
+                        float angle = Mathf.Lerp(180f, 90f, i / (float)cornerSteps);
+                        float rad = angle * Mathf.Deg2Rad;
+                        Vector2 pCurr = arcCenter + new Vector2(Mathf.Cos(rad) * arcRadius, Mathf.Sin(rad) * arcRadius);
+                        Vector2 mid = (pPrev + pCurr) * 0.5f;
+                        Vector2 dir = pCurr - pPrev;
+                        float len = dir.magnitude;
+                        float rotZ = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+
+                        Vector3 perp = (Vector3)(Vector2.Perpendicular(dir.normalized) * 0.10f);
+                        GameObject line1 = CreateSprite(roads, $"NW_CenterLine1_{i}", new Vector3(mid.x, mid.y, 0f) + perp, new Vector3(len + 0.05f, 0.10f, 1f), yellowLineCol, 2);
+                        line1.transform.rotation = Quaternion.Euler(0f, 0f, rotZ);
+                        GameObject line2 = CreateSprite(roads, $"NW_CenterLine2_{i}", new Vector3(mid.x, mid.y, 0f) - perp, new Vector3(len + 0.05f, 0.10f, 1f), yellowLineCol, 2);
+                        line2.transform.rotation = Quaternion.Euler(0f, 0f, rotZ);
+
+                        pPrev = pCurr;
+                    }
+                }
+
+                if (existingCar != null)
+                {
+                    // Ensure camera follow is bound
+                    Level6CameraFollow cf = cam.GetComponent<Level6CameraFollow>();
+                    if (cf == null) cf = cam.gameObject.AddComponent<Level6CameraFollow>();
+                    cf.SetTarget(existingCar.transform);
+                }
                 return;
             }
 
@@ -268,11 +324,43 @@ namespace TrafficTown2D.Level6
             CreateSprite(roads.transform, "WestLogistics_Shoulder", new Vector3(-42f, 25f, 0f), new Vector3(11.2f, 11.2f, 1f), shoulderCol, -2);
             CreateSprite(roads.transform, "WestLogistics_Pad", new Vector3(-42f, 25f, 0f), new Vector3(10f, 10f, 1f), new Color(0.22f, 0.25f, 0.28f, 1f), 0);
             CreateSprite(roads.transform, "WestLogistics_CurbW", new Vector3(-47.18f, 25f, 0f), new Vector3(0.35f, 10.4f, 1f), curbCol, 1);
-            CreateRoadSegment(roads.transform, "Road_Roundabout_NorthArm", new Vector3(-15f, 38.95f, 0f), new Vector2(7.2f, 4.9f), 0f, roadCol, curbCol, yellowLineCol, whiteLineCol);
+            // Structure 7a: Roundabout North Leg connecting north towards expressway: from Y = 36.5 to Y = 41.4 (length 4.9, width 7.2)
+            CreateRoadSegment(roads.transform, "Road_Roundabout_NorthArm", new Vector3(-15f, 38.95f, 0f), new Vector2(7.2f, 4.9f), 0f, roadCol, curbCol, yellowLineCol, whiteLineCol, false, true, true);
 
-            // 6. Northern Expressway & U-Turn Loop
-            CreateRoadSegment(roads.transform, "Road_Northern_Expressway", new Vector3(16.5f, 45f, 0f), new Vector2(63f, 7.2f), 0f, roadCol, curbCol, yellowLineCol, whiteLineCol, true, true, false);
-            CreateSprite(roads.transform, "Exp_BottomCurb_West", new Vector3(3.75f, 41.22f, 0f), new Vector3(37.5f, 0.35f, 1f), curbCol, 1);
+            // Structure 7b: NW 90-Degree Corner connecting Roundabout North Arm (-15, 41.4) to Northern Expressway (-11.4, 45)
+            CreateSprite(roads.transform, "Corner_NW_Shoulder", new Vector3(-15f, 45f, 0f), new Vector3(8.6f, 8.6f, 1f), shoulderCol, -2);
+            CreateSprite(roads.transform, "Corner_NW_Pad", new Vector3(-15f, 45f, 0f), new Vector3(7.4f, 7.4f, 1f), roadCol, 0);
+            CreateSprite(roads.transform, "Corner_NW_TopCurb", new Vector3(-15f, 48.78f, 0f), new Vector3(7.4f, 0.35f, 1f), curbCol, 1);
+            CreateSprite(roads.transform, "Corner_NW_LeftCurb", new Vector3(-18.78f, 45f, 0f), new Vector3(0.35f, 7.4f, 1f), curbCol, 1);
+            CreateSprite(roads.transform, "Corner_NW_InnerCurb", new Vector3(-11.22f, 41.22f, 0f), new Vector3(0.35f, 0.35f, 1f), curbCol, 1);
+
+            // Smooth 90-degree curved double yellow line through the NW Corner
+            int cornerSteps = 10;
+            Vector2 arcCenter = new Vector2(-11.4f, 41.4f);
+            float arcRadius = 3.6f;
+            Vector2 pPrev = arcCenter + new Vector2(Mathf.Cos(180f * Mathf.Deg2Rad) * arcRadius, Mathf.Sin(180f * Mathf.Deg2Rad) * arcRadius);
+            for (int i = 1; i <= cornerSteps; i++)
+            {
+                float angle = Mathf.Lerp(180f, 90f, i / (float)cornerSteps);
+                float rad = angle * Mathf.Deg2Rad;
+                Vector2 pCurr = arcCenter + new Vector2(Mathf.Cos(rad) * arcRadius, Mathf.Sin(rad) * arcRadius);
+                Vector2 mid = (pPrev + pCurr) * 0.5f;
+                Vector2 dir = pCurr - pPrev;
+                float len = dir.magnitude;
+                float rotZ = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+
+                Vector3 perp = (Vector3)(Vector2.Perpendicular(dir.normalized) * 0.10f);
+                GameObject line1 = CreateSprite(roads.transform, $"NW_CenterLine1_{i}", new Vector3(mid.x, mid.y, 0f) + perp, new Vector3(len + 0.05f, 0.10f, 1f), yellowLineCol, 2);
+                line1.transform.rotation = Quaternion.Euler(0f, 0f, rotZ);
+                GameObject line2 = CreateSprite(roads.transform, $"NW_CenterLine2_{i}", new Vector3(mid.x, mid.y, 0f) - perp, new Vector3(len + 0.05f, 0.10f, 1f), yellowLineCol, 2);
+                line2.transform.rotation = Quaternion.Euler(0f, 0f, rotZ);
+
+                pPrev = pCurr;
+            }
+
+            // 6. Northern Expressway from X = -11.4 to X = 48.0 (length 59.4, width 7.2, center X = 18.3)
+            CreateRoadSegment(roads.transform, "Road_Northern_Expressway", new Vector3(18.3f, 45f, 0f), new Vector2(59.4f, 7.2f), 0f, roadCol, curbCol, yellowLineCol, whiteLineCol, true, true, false);
+            CreateSprite(roads.transform, "Exp_BottomCurb_West", new Vector3(5.55f, 41.22f, 0f), new Vector3(33.9f, 0.35f, 1f), curbCol, 1);
             CreateSprite(roads.transform, "Exp_BottomCurb_East", new Vector3(42.75f, 41.22f, 0f), new Vector3(10.5f, 0.35f, 1f), curbCol, 1);
 
             BuildUTurnLoop(roads.transform, new Vector2(30f, 45f), 7.5f, roadCol, curbCol, whiteLineCol);
@@ -477,9 +565,9 @@ namespace TrafficTown2D.Level6
             GameObject signsContainer = new GameObject("RoadsideSigns");
             signsContainer.transform.SetParent(world, false);
 
-            CreateSignboard(signsContainer.transform, "Sign_SpeedLimit_40", new Vector3(-41f, -38f, 0f), "SPEED LIMIT");
-            CreateSignboard(signsContainer.transform, "Sign_RainRoad", new Vector3(-41f, -34f, 0f), "RAIN ROAD");
-            CreateSignboard(signsContainer.transform, "Sign_SharpCurve_90", new Vector3(-41f, -22f, 0f), "SHARP CURVE");
+            CreateSignboard(signsContainer.transform, "Sign_SpeedLimit_40", new Vector3(-39.8f, -38f, 0f), "SPEED LIMIT");
+            CreateSignboard(signsContainer.transform, "Sign_RainRoad", new Vector3(-39.8f, -34f, 0f), "RAIN ROAD");
+            CreateSignboard(signsContainer.transform, "Sign_SharpCurve_90", new Vector3(-39.8f, -22f, 0f), "SHARP CURVE");
 
             CreateAsphaltArrow(signsContainer.transform, "Arrow_SW_Ahead", new Vector3(-45f, -36f, 0f), 0f);
             CreateAsphaltArrow(signsContainer.transform, "Arrow_SW_TurnRight", new Vector3(-45f, -22f, 0f), 0f, true);
@@ -586,10 +674,11 @@ namespace TrafficTown2D.Level6
             CreateWall(bounds.transform, "CurbCol_Detour_East", new Vector3(42.1f, 15f, 0f), new Vector2(0.8f, 22f));
             CreateWall(bounds.transform, "CurbCol_Detour_North", new Vector3(19f, 29.1f, 0f), new Vector2(40f, 0.8f));
 
-            CreateWall(bounds.transform, "CurbCol_Expressway_North", new Vector3(16.5f, 49.1f, 0f), new Vector2(64f, 0.8f));
+            CreateWall(bounds.transform, "CurbCol_Expressway_North", new Vector3(14.7f, 49.1f, 0f), new Vector2(67.6f, 0.8f));
             CreateWall(bounds.transform, "CurbCol_Expressway_DeadEnd", new Vector3(48.5f, 45f, 0f), new Vector2(0.8f, 8f));
-            CreateWall(bounds.transform, "CurbCol_Expressway_SouthWest", new Vector3(3.75f, 40.9f, 0f), new Vector2(37.5f, 0.8f));
+            CreateWall(bounds.transform, "CurbCol_Expressway_SouthWest", new Vector3(5.55f, 40.9f, 0f), new Vector2(33.9f, 0.8f));
             CreateWall(bounds.transform, "CurbCol_Expressway_SouthEast", new Vector3(42.75f, 40.9f, 0f), new Vector2(10.5f, 0.8f));
+            CreateWall(bounds.transform, "CurbCol_NorthArm_Corner_Left", new Vector3(-19.1f, 42.8f, 0f), new Vector2(0.8f, 12.6f));
 
             CreateWall(bounds.transform, "CurbCol_UTurn_OuterApex", new Vector3(30f, 29.8f, 0f), new Vector2(16f, 0.8f));
             CreateWall(bounds.transform, "CurbCol_UTurn_OuterLeft", new Vector3(18.5f, 36f, 0f), new Vector2(0.8f, 12f));
@@ -651,7 +740,7 @@ namespace TrafficTown2D.Level6
             tjCol.isTrigger = true;
             JunctionDetectionZone tjZone = tjObj.AddComponent<JunctionDetectionZone>();
             SetRef(tjZone, "junctionName", "South-Central T-Junction");
-            SetRef(tjZone, "approachAdvice", "⊥ T-Junction ahead: Yield to cross traffic & slow down in rain!");
+            SetRef(tjZone, "approachAdvice", "[T-JUNCTION] T-Junction ahead: Yield to cross traffic & slow down in rain!");
         }
         #endregion
 
@@ -868,6 +957,9 @@ namespace TrafficTown2D.Level6
         #region Player Car
         private static GameObject BuildPlayerCar(Transform world)
         {
+            Level6PlayerCar existing = UnityEngine.Object.FindFirstObjectByType<Level6PlayerCar>();
+            if (existing != null) return existing.gameObject;
+
             GameObject car = new GameObject("PlayerCar");
             car.transform.SetParent(world, false);
             car.transform.position = new Vector3(-45f, -35f, 0f);
@@ -918,6 +1010,8 @@ namespace TrafficTown2D.Level6
             bl.transform.localPosition = pos;
             bl.transform.localScale = new Vector3(0.35f, 0.35f, 1f);
             SpriteRenderer sr = bl.AddComponent<SpriteRenderer>();
+            Material mat = GetSpriteLitMaterial();
+            if (mat != null) sr.material = mat;
             sr.sprite = GetOrCreateCircle();
             sr.color = new Color(0.6f, 0.1f, 0.1f, 0.6f);
             sr.sortingOrder = 12;
@@ -947,9 +1041,9 @@ namespace TrafficTown2D.Level6
             mTimer.fontStyle = FontStyles.Bold;
             TMP_Text mTitle = CreateUIText(mCard.transform, "Title", "RAIN SLICK ROADS", 17f, TextAlignmentOptions.Left, new Vector2(430f, 26f), new Vector2(15f, -38f), new Vector2(0f, 1f));
             mTitle.fontStyle = FontStyles.Bold;
-            TMP_Text mObj = CreateUIText(mCard.transform, "Objective", "Control speed through the 90° turn and curved road.", 12.5f, TextAlignmentOptions.Left, new Vector2(430f, 44f), new Vector2(15f, -66f), new Vector2(0f, 1f));
+            TMP_Text mObj = CreateUIText(mCard.transform, "Objective", "Control speed through the 90-degree turn and curved road.", 12.5f, TextAlignmentOptions.Left, new Vector2(430f, 44f), new Vector2(15f, -66f), new Vector2(0f, 1f));
             mObj.color = new Color(0.85f, 0.88f, 0.92f, 1f);
-            TMP_Text mGps = CreateUIText(mCard.transform, "GPSGuidance", "GPS: ↑ EAST DEPOT (85m)", 13.5f, TextAlignmentOptions.Left, new Vector2(430f, 24f), new Vector2(15f, -125f), new Vector2(0f, 1f));
+            TMP_Text mGps = CreateUIText(mCard.transform, "GPSGuidance", "GPS: [^] EAST DEPOT (85m)", 13.5f, TextAlignmentOptions.Left, new Vector2(430f, 24f), new Vector2(15f, -125f), new Vector2(0f, 1f));
             mGps.fontStyle = FontStyles.Bold;
             mGps.color = new Color(1f, 0.9f, 0.3f, 1f);
 
@@ -1007,6 +1101,7 @@ namespace TrafficTown2D.Level6
             TMP_Text skWarning = CreateUIText(spPanel.transform, "Skid", "[!] SKIDDING!", 12f, TextAlignmentOptions.Center, new Vector2(190f, 20f), new Vector2(10f, 24f), new Vector2(0f, 0f));
             skWarning.fontStyle = FontStyles.Bold;
             skWarning.color = new Color(1f, 0.3f, 0.3f, 1f);
+            skWarning.gameObject.SetActive(false);
             TMP_Text offRoadWarn = CreateUIText(spPanel.transform, "OffRoad", "[!] OFF-ROAD! RETURN", 11.5f, TextAlignmentOptions.Center, new Vector2(190f, 20f), new Vector2(10f, 4f), new Vector2(0f, 0f));
             offRoadWarn.fontStyle = FontStyles.Bold;
             offRoadWarn.color = new Color(1f, 0.25f, 0.25f, 1f);
@@ -1178,6 +1273,20 @@ namespace TrafficTown2D.Level6
         #endregion
 
         #region Helpers & Texture Synthesis
+        private static Material spriteLitMaterialCache;
+        private static Material GetSpriteLitMaterial()
+        {
+            if (spriteLitMaterialCache == null)
+            {
+                Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Lit-Default");
+                if (shader != null)
+                {
+                    spriteLitMaterialCache = new Material(shader);
+                }
+            }
+            return spriteLitMaterialCache;
+        }
+
         private static GameObject CreateSprite(Transform parent, string name, Vector3 pos, Vector3 scale, Color col, int sortingOrder, bool isCircle = false)
         {
             GameObject go = new GameObject(name);
@@ -1186,6 +1295,8 @@ namespace TrafficTown2D.Level6
             go.transform.localScale = scale;
 
             SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            Material mat = GetSpriteLitMaterial();
+            if (mat != null) sr.material = mat;
             sr.sprite = isCircle ? GetOrCreateCircle() : GetOrCreateSquare();
             sr.color = col;
             sr.sortingOrder = sortingOrder;
@@ -1201,10 +1312,19 @@ namespace TrafficTown2D.Level6
         {
             if (squareCache == null)
             {
-                Texture2D tex = new Texture2D(2, 2);
-                tex.SetPixels(new Color[] { Color.white, Color.white, Color.white, Color.white });
-                tex.Apply();
-                squareCache = Sprite.Create(tex, new Rect(0, 0, 2, 2), new Vector2(0.5f, 0.5f), 1f);
+                squareCache = Resources.Load<Sprite>("Level6/WorldSquare");
+                if (squareCache == null)
+                {
+                    squareCache = Resources.Load<Sprite>("Generated/WorldSquare");
+                }
+                if (squareCache == null)
+                {
+                    Texture2D tex = new Texture2D(2, 2);
+                    tex.SetPixels(new Color[] { Color.white, Color.white, Color.white, Color.white });
+                    tex.Apply();
+                    // 2 pixels / 2 pixelsPerUnit = 1.0 world units
+                    squareCache = Sprite.Create(tex, new Rect(0, 0, 2, 2), new Vector2(0.5f, 0.5f), 2f);
+                }
             }
             return squareCache;
         }
@@ -1213,18 +1333,27 @@ namespace TrafficTown2D.Level6
         {
             if (circleCache == null)
             {
-                int res = 32;
-                Texture2D tex = new Texture2D(res, res);
-                for (int y = 0; y < res; y++)
+                circleCache = Resources.Load<Sprite>("Level6/WorldCircle");
+                if (circleCache == null)
                 {
-                    for (int x = 0; x < res; x++)
-                    {
-                        float dist = Vector2.Distance(new Vector2(x, y), new Vector2(res / 2f, res / 2f));
-                        tex.SetPixel(x, y, dist <= (res / 2f) ? Color.white : Color.clear);
-                    }
+                    circleCache = Resources.Load<Sprite>("Generated/WorldCircle");
                 }
-                tex.Apply();
-                circleCache = Sprite.Create(tex, new Rect(0, 0, res, res), new Vector2(0.5f, 0.5f), 1f);
+                if (circleCache == null)
+                {
+                    int res = 32;
+                    Texture2D tex = new Texture2D(res, res);
+                    for (int y = 0; y < res; y++)
+                    {
+                        for (int x = 0; x < res; x++)
+                        {
+                            float dist = Vector2.Distance(new Vector2(x, y), new Vector2(res / 2f, res / 2f));
+                            tex.SetPixel(x, y, dist <= (res / 2f) ? Color.white : Color.clear);
+                        }
+                    }
+                    tex.Apply();
+                    // res pixels / res pixelsPerUnit = 1.0 world units
+                    circleCache = Sprite.Create(tex, new Rect(0, 0, res, res), new Vector2(0.5f, 0.5f), (float)res);
+                }
             }
             return circleCache;
         }
@@ -1233,22 +1362,30 @@ namespace TrafficTown2D.Level6
         {
             if (carCache == null)
             {
-                int w = 24, h = 48;
-                Texture2D tex = new Texture2D(w, h);
-                for (int y = 0; y < h; y++)
+                carCache = Resources.Load<Sprite>("Vehicles/CarBlueTopDown");
+                if (carCache == null)
                 {
-                    for (int x = 0; x < w; x++)
-                    {
-                        Color c = new Color(0.2f, 0.5f, 0.9f, 1f); // Blue car
-                        // Windshield
-                        if (y >= 26 && y <= 34 && x >= 4 && x <= 19) c = new Color(0.1f, 0.15f, 0.25f, 1f);
-                        // Rear window
-                        if (y >= 10 && y <= 16 && x >= 4 && x <= 19) c = new Color(0.1f, 0.15f, 0.25f, 1f);
-                        tex.SetPixel(x, y, c);
-                    }
+                    carCache = Resources.Load<Sprite>("Level6/CarBlueTopDown");
                 }
-                tex.Apply();
-                carCache = Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 16f);
+                if (carCache == null)
+                {
+                    int w = 24, h = 48;
+                    Texture2D tex = new Texture2D(w, h);
+                    for (int y = 0; y < h; y++)
+                    {
+                        for (int x = 0; x < w; x++)
+                        {
+                            Color c = new Color(0.2f, 0.5f, 0.9f, 1f); // Blue car
+                            // Windshield
+                            if (y >= 26 && y <= 34 && x >= 4 && x <= 19) c = new Color(0.1f, 0.15f, 0.25f, 1f);
+                            // Rear window
+                            if (y >= 10 && y <= 16 && x >= 4 && x <= 19) c = new Color(0.1f, 0.15f, 0.25f, 1f);
+                            tex.SetPixel(x, y, c);
+                        }
+                    }
+                    tex.Apply();
+                    carCache = Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 24f);
+                }
             }
             return carCache;
         }

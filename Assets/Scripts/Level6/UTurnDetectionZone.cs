@@ -5,7 +5,7 @@ namespace TrafficTown2D.Level6
 {
     /// <summary>
     /// Detects when the player enters a dedicated U-turn loop, monitors turning progress,
-    /// and verifies that a complete 140°-180° heading reversal occurred safely.
+    /// and verifies that a complete 140-deg to 180-deg heading reversal occurred safely.
     /// </summary>
     [RequireComponent(typeof(Collider2D))]
     public class UTurnDetectionZone : MonoBehaviour

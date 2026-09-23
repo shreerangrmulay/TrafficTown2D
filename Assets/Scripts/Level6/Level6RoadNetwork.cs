@@ -42,58 +42,69 @@ namespace TrafficTown2D.Level6
         /// </summary>
         public bool IsPointOnRoad(Vector2 pos)
         {
-            // 1. SW Avenue: X in [-49.5, -40.5], Y in [-42.0, -11.0]
-            if (pos.x >= -49.5f && pos.x <= -40.5f && pos.y >= -42.0f && pos.y <= -11.0f) return true;
+            // 1. SW Avenue: X in [-50.0, -40.0], Y in [-47.0, -10.5]
+            if (pos.x >= -50.0f && pos.x <= -40.0f && pos.y >= -47.0f && pos.y <= -10.5f) return true;
 
-            // 2. South Connector & 90-Deg Corner: X in [-49.5, -11.0], Y in [-19.5, -10.5]
-            if (pos.x >= -49.5f && pos.x <= -11.0f && pos.y >= -19.5f && pos.y <= -10.5f) return true;
+            // 2. South Connector & 90-Deg Corner & T-Junction Box:
+            if (pos.x >= -50.0f && pos.x <= -10.0f && pos.y >= -20.0f && pos.y <= -10.0f) return true;
 
-            // 3. North Leg from T-Junction: X in [-19.5, -10.5], Y in [-19.5, 18.0]
-            if (pos.x >= -19.5f && pos.x <= -10.5f && pos.y >= -19.5f && pos.y <= 18.0f) return true;
+            // 3. North Leg from T-Junction to Roundabout:
+            if (pos.x >= -20.0f && pos.x <= -10.0f && pos.y >= -19.5f && pos.y <= 18.0f) return true;
 
-            // 4. Curved Road Valley from (-15, -15) to (25, -15):
-            if (pos.x >= -15.0f && pos.x <= 25.0f && pos.y >= -26.0f && pos.y <= -10.5f)
+            // 4. Curved Road Valley from (-11.4, -15) to (20, -15) (exact spline sampling):
+            if (pos.x >= -14.0f && pos.x <= 23.0f && pos.y >= -28.0f && pos.y <= -8.0f)
             {
-                float t = Mathf.Clamp01((pos.x + 15f) / 40f);
-                float curveY = Mathf.Pow(1 - t, 2) * -15f + 2 * (1 - t) * t * -23f + Mathf.Pow(t, 2) * -15f;
-                if (Mathf.Abs(pos.y - curveY) <= 5.0f) return true;
+                Vector2 c0 = new Vector2(-11.4f, -15f);
+                Vector2 c1 = new Vector2(4.3f, -23f);
+                Vector2 c2 = new Vector2(20f, -15f);
+                Vector2 prevPt = c0;
+                float minSqDist = float.MaxValue;
+                for (int i = 1; i <= 24; i++)
+                {
+                    float t = i / 24f;
+                    Vector2 currPt = (1f - t) * (1f - t) * c0 + 2f * (1f - t) * t * c1 + t * t * c2;
+                    float d = DistancePointToSegment(pos, prevPt, currPt);
+                    if (d < minSqDist) minSqDist = d;
+                    prevPt = currPt;
+                }
+                if (minSqDist <= 5.5f) return true;
             }
 
-            // 5. East Depot Pad: X in [19.0, 31.0], Y in [-20.5, -9.5]
-            if (pos.x >= 19.0f && pos.x <= 31.0f && pos.y >= -20.5f && pos.y <= -9.5f) return true;
+            // 5. East Depot Pad:
+            if (pos.x >= 18.0f && pos.x <= 32.0f && pos.y >= -21.5f && pos.y <= -8.5f) return true;
 
-            // 6. Fork Approach: X in [20.5, 29.5], Y in [-15.0, 4.5]
-            if (pos.x >= 20.5f && pos.x <= 29.5f && pos.y >= -15.0f && pos.y <= 4.5f) return true;
+            // 6. Fork Approach:
+            if (pos.x >= 19.5f && pos.x <= 30.5f && pos.y >= -16.0f && pos.y <= 6.0f) return true;
 
             // 7. Branch A (Flooded Diagonal Route) from (25, 0) to (0, 25):
             Vector2 p1 = new Vector2(25f, 0f);
             Vector2 p2 = new Vector2(0f, 25f);
             float distToDiag = DistancePointToSegment(pos, p1, p2);
-            if (distToDiag <= 4.8f) return true;
+            if (distToDiag <= 5.5f) return true;
 
             // 8. Branch B Detour:
-            // CurveIn / East Detour: X in [25.0, 42.0], Y in [-2.0, 19.5]
-            if (pos.x >= 25.0f && pos.x <= 42.0f && pos.y >= -2.0f && pos.y <= 19.5f) return true;
-            // North Arm: X in [-5.0, 42.0], Y in [20.5, 29.5]
-            if (pos.x >= -5.0f && pos.x <= 42.0f && pos.y >= 20.5f && pos.y <= 29.5f) return true;
+            // CurveIn / East Detour:
+            if (pos.x >= 23.5f && pos.x <= 43.5f && pos.y >= -3.0f && pos.y <= 23.0f) return true;
+            // North Arm:
+            if (pos.x >= -6.0f && pos.x <= 43.5f && pos.y >= 19.5f && pos.y <= 30.5f) return true;
 
-            // 9. Roundabout at (-15, 25): outer radius 12.5m, inner island 5.0m
+            // 9. Roundabout at (-15, 25): outer radius 11.5m, inner island 5.5m
             float distToRb = Vector2.Distance(pos, new Vector2(-15f, 25f));
-            if (distToRb <= 12.5f && distToRb >= 5.0f) return true;
-            if (distToRb < 5.0f) return false;
+            if (distToRb <= 14.0f && distToRb >= 4.2f) return true;
+            if (distToRb < 4.2f) return false;
 
-            // 10. Roundabout West Arm & Logistics Hub: X in [-48.0, -15.0], Y in [20.5, 29.5]
-            if (pos.x >= -48.0f && pos.x <= -15.0f && pos.y >= 20.5f && pos.y <= 29.5f) return true;
+            // 10. Roundabout West Arm & Logistics Hub:
+            if (pos.x >= -49.0f && pos.x <= -14.0f && pos.y >= 19.5f && pos.y <= 30.5f) return true;
 
-            // 11. Roundabout North Arm: X in [-19.5, -10.5], Y in [33.0, 49.0]
-            if (pos.x >= -19.5f && pos.x <= -10.5f && pos.y >= 33.0f && pos.y <= 49.0f) return true;
+            // 11. Roundabout North Arm & NW Corner:
+            if (pos.x >= -20.0f && pos.x <= -10.0f && pos.y >= 32.0f && pos.y <= 50.0f) return true;
 
-            // 12. Northern Expressway: X in [-19.5, 52.0], Y in [40.5, 49.5]
-            if (pos.x >= -19.5f && pos.x <= 52.0f && pos.y >= 40.5f && pos.y <= 49.5f) return true;
+            // 12. Northern Expressway & NW Corner:
+            if (pos.x >= -20.0f && pos.x <= 53.0f && pos.y >= 39.5f && pos.y <= 50.5f) return true;
 
-            // 13. U-Turn Loop at (30, 37.5): half-circle extending south from expressway
+            // 13. U-Turn Loop at (30, 37.5):
             float distToUt = Vector2.Distance(pos, new Vector2(30f, 37.5f));
-            if (distToUt <= 8.5f && distToUt >= 3.0f && pos.y <= 45.0f) return true;
+            if (distToUt <= 11.8f && distToUt >= 3.0f && pos.y <= 46.5f) return true;
 
             return false;
         }

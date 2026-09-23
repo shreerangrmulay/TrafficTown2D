@@ -36,8 +36,9 @@ namespace TrafficTown2D.Editor
                     Debug.Log("[Level6SetupAutoRun] Running Level6Setup.SetupLevel6()...");
                     Level6Setup.SetupLevel6();
                     MainMenuSetup.SetupMainMenu();
+                    UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/Level6.unity", UnityEditor.SceneManagement.OpenSceneMode.Single);
                     File.WriteAllText(ResultPath, "OK");
-                    Debug.Log("[Level6SetupAutoRun] SetupLevel6 & MainMenu completed successfully!");
+                    Debug.Log("[Level6SetupAutoRun] SetupLevel6, MainMenu & Level6 reload completed successfully!");
                 }
                 catch (System.Exception ex)
                 {
@@ -53,4 +54,4 @@ namespace TrafficTown2D.Editor
     }
 }
 #endif
-// Trigger reload: 2026-09-23T18:05:00
+// Trigger reload: 2026-09-23T23:31:45

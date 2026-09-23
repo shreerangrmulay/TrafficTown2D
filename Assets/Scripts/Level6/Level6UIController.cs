@@ -104,6 +104,9 @@ namespace TrafficTown2D.Level6
 
         private void Start()
         {
+            if (skidWarningText != null) skidWarningText.gameObject.SetActive(false);
+            if (offRoadWarningText != null) offRoadWarningText.gameObject.SetActive(false);
+
             if (playerCar == null)
             {
                 playerCar = FindFirstObjectByType<Level6PlayerCar>();

@@ -9,7 +9,7 @@ namespace TrafficTown2D.Level6
     public class Level6PlayerCar : MonoBehaviour
     {
         [Header("Driving Physics")]
-        [SerializeField, Min(1f)] private float maxSpeed = 8.5f;          // 8.5 units/s ≈ 42 km/h
+        [SerializeField, Min(1f)] private float maxSpeed = 8.5f;          // 8.5 units/s ~= 42 km/h
         [SerializeField, Min(1f)] private float acceleration = 5.2f;      // Base acceleration
         [SerializeField, Min(1f)] private float brakingRate = 8.5f;       // Base braking rate
         [SerializeField, Min(1f)] private float naturalDrag = 3.2f;       // Natural rolling resistance
@@ -40,6 +40,7 @@ namespace TrafficTown2D.Level6
         private bool isBraking = false;
         private bool isControlEnabled = true;
         private float collisionCooldown = 0f;
+        private bool wasSkidding = false;
 
         // Public Telemetry & Properties
         public float CurrentSpeedKmh => Mathf.Abs(forwardSpeed) * 5f;
@@ -90,6 +91,11 @@ namespace TrafficTown2D.Level6
                 steerInput = 0f;
                 UpdateBrakeLights();
                 SpeedChanged?.Invoke(CurrentSpeedKmh, 40f);
+                if (wasSkidding)
+                {
+                    wasSkidding = false;
+                    SkidStateChanged?.Invoke(false);
+                }
                 return;
             }
 
@@ -243,6 +249,15 @@ namespace TrafficTown2D.Level6
             }
 
             rb.linearVelocity = velocity;
+
+            // Skid detection: active when hard steering at speed with reduced grip or heavy braking while turning
+            bool isSkiddingNow = (effectiveGrip < 0.75f && Mathf.Abs(steerInput) > 0.45f && Mathf.Abs(forwardSpeed) > 3.8f) ||
+                                 (isBraking && Mathf.Abs(steerInput) > 0.35f && Mathf.Abs(forwardSpeed) > 3.0f);
+            if (isSkiddingNow != wasSkidding)
+            {
+                wasSkidding = isSkiddingNow;
+                SkidStateChanged?.Invoke(wasSkidding);
+            }
         }
 
         private void UpdateBrakeLights()

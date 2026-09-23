@@ -31,7 +31,7 @@ namespace TrafficTown2D.Level6
                     index = 1,
                     title = "MISSION 1: RAIN SLICK ROADS",
                     subtitle = "REDUCED TIRE GRIP & CORNERING",
-                    objective = "Heavy downpour has reduced road grip. Control speed through the 90° turn and curved road to reach the Depot.",
+                    objective = "Heavy downpour has reduced road grip. Control speed through the 90-degree turn and curved road to reach the Depot.",
                     weather = WeatherType.HeavyRain,
                     playerSpawnPosition = new Vector2(-45f, -35f),
                     playerSpawnHeading = 0f, // Facing North

@@ -44,6 +44,10 @@ namespace TrafficTown2D.Level6
                 return;
             }
             Instance = this;
+            if (playerCar == null)
+            {
+                playerCar = FindFirstObjectByType<Level6PlayerCar>();
+            }
         }
 
         private void Start()

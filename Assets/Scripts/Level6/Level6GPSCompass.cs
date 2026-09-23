@@ -109,14 +109,14 @@ namespace TrafficTown2D.Level6
         private string GetDirectionArrow(float relAngle)
         {
             // relAngle: 0 = straight ahead, +90 = left, -90 = right, 180 = behind
-            if (relAngle > -22.5f && relAngle <= 22.5f) return "↑";
-            if (relAngle > 22.5f && relAngle <= 67.5f) return "↖";
-            if (relAngle > 67.5f && relAngle <= 112.5f) return "←";
-            if (relAngle > 112.5f && relAngle <= 157.5f) return "↙";
-            if (relAngle > -67.5f && relAngle <= -22.5f) return "↗";
-            if (relAngle > -112.5f && relAngle <= -67.5f) return "→";
-            if (relAngle > -157.5f && relAngle <= -112.5f) return "↘";
-            return "↓";
+            if (relAngle > -22.5f && relAngle <= 22.5f) return "[^]";
+            if (relAngle > 22.5f && relAngle <= 67.5f) return "[^<]";
+            if (relAngle > 67.5f && relAngle <= 112.5f) return "[<]";
+            if (relAngle > 112.5f && relAngle <= 157.5f) return "[v<]";
+            if (relAngle > -67.5f && relAngle <= -22.5f) return "[^>]";
+            if (relAngle > -112.5f && relAngle <= -67.5f) return "[>]";
+            if (relAngle > -157.5f && relAngle <= -112.5f) return "[v>]";
+            return "[v]";
         }
     }
 }
