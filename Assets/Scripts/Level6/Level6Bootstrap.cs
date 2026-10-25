@@ -988,6 +988,8 @@ namespace TrafficTown2D.Level6
             SpriteRenderer bl2 = CreateBrakeLight(car.transform, "BL_R", new Vector3(0.65f, -1.6f, 0f));
             SetObjectArray(pc, "brakeLights", new[] { bl1, bl2 });
 
+            car.AddComponent<TrafficTown2D.Player.CarIndicatorController>();
+
             return car;
         }
 

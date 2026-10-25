@@ -17,20 +17,19 @@ namespace TrafficTown2D.UI
 
         private void Awake()
         {
-            if (gotItButton != null)
-            {
-                gotItButton.onClick.RemoveListener(DismissIntro);
-                gotItButton.onClick.AddListener(DismissIntro);
-            }
+            EnsureGotItButton();
         }
 
         private void Start()
         {
+            EnsureGotItButton();
+
             // Do NOT fall back to FindAnyObjectByType<Canvas>() -- that grabs
             // unrelated canvases (e.g. the persistent MainMenu Canvas) and shows
             // them as an intro panel, blocking gameplay.
             if (introPanel == null)
             {
+                Time.timeScale = 1f;
                 GameManager.Instance?.SetState(GameState.Playing);
                 return;
             }
@@ -38,6 +37,31 @@ namespace TrafficTown2D.UI
             introPanel.SetActive(true);
             SetIntroContent();
             PauseForInstructions();
+        }
+
+        private void EnsureGotItButton()
+        {
+            if (gotItButton == null && introPanel != null)
+            {
+                gotItButton = introPanel.GetComponentInChildren<Button>(true);
+            }
+
+            if (gotItButton != null)
+            {
+                gotItButton.onClick.RemoveListener(DismissIntro);
+                gotItButton.onClick.AddListener(DismissIntro);
+
+                // Crucial fix: Ensure any child text/image inside GotItButton does NOT block raycasts,
+                // otherwise clicks on the label will not trigger the button!
+                Graphic[] childGraphics = gotItButton.GetComponentsInChildren<Graphic>(true);
+                for (int i = 0; i < childGraphics.Length; i++)
+                {
+                    if (childGraphics[i].gameObject != gotItButton.gameObject)
+                    {
+                        childGraphics[i].raycastTarget = false;
+                    }
+                }
+            }
         }
 
         private void SetIntroContent()
@@ -89,12 +113,22 @@ namespace TrafficTown2D.UI
                         "Drive forward with A/D keys.\n\nObey all posted speed limits.\nSLOW DOWN in the school zone!\nYour speed is shown on the HUD.");
                     break;
                 case 8:
-                    SetTexts("🚑 EMERGENCY VEHICLES",
-                        "Drive forward with A/D keys.\n\nWhen you hear sirens or see flashing lights:\n1. Pull over to the shoulder (W/S to move up/down).\n2. STOP completely.\n3. Wait until the emergency vehicle passes.");
+                    SetTexts("🚗 THE OVERTAKE",
+                        "Don't just overtake. Overtake safely.\n\n" +
+                        "1. Check Road Markings: Only overtake on dashed lines; solid lines prohibit passing.\n" +
+                        "2. Judge Oncoming Traffic: Wait behind lead vehicles until oncoming lanes are completely clear.\n" +
+                        "3. Prohibited Zones: NEVER overtake on blind bends, crests, or crossings.\n" +
+                        "4. Signal Your Intentions: Press Q to signal before pulling out, and E before returning.\n" +
+                        "5. Patience Saves Lives: Waiting safely behind a slower vehicle is often the safest decision!");
                     break;
                 case 9:
-                    SetTexts("🔄 ROUNDABOUTS",
-                        "Drive with A/D and W/S keys.\n\n1. YIELD to traffic inside the roundabout.\n2. Enter when clear.\n3. Press Q or E to SIGNAL before exiting.");
+                    SetTexts("ROUNDABOUT RULES",
+                        "Slow Down. Give Way. Choose Your Exit.\n\n" +
+                        "1. Reduce Speed: Slow down before entering (< 25 km/h).\n" +
+                        "2. Give Way: Vehicles circulating inside have right of way.\n" +
+                        "3. Circulate Clockwise: Travel around the central island.\n" +
+                        "4. Signal Before Exit: Press Q or E to indicate.\n" +
+                        "5. Yield to Pedestrians: Stop at zebra crossings.");
                     break;
                 case 10:
                     SetTexts("🏆 THE ULTIMATE COMMUTE",
@@ -119,13 +153,18 @@ namespace TrafficTown2D.UI
                 introPanel.SetActive(false);
             }
 
+            Time.timeScale = 1f;
+
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.SetState(GameState.Playing);
-                return;
             }
 
-            Time.timeScale = 1f;
+            var playerCars = UnityEngine.Object.FindObjectsByType<TrafficTown2D.Level3.Level3PlayerCar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (int i = 0; i < playerCars.Length; i++)
+            {
+                playerCars[i].SetControlEnabled(true);
+            }
         }
 
         private static void PauseForInstructions()

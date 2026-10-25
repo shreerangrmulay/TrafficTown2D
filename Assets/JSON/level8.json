@@ -1,31 +1,74 @@
 {
   "levelId": "level8",
-  "levelName": "Emergency Vehicles",
+  "levelName": "The Overtake",
   "difficulty": "hard",
-  "objective": "React correctly to approaching emergency vehicles.",
+  "objective": "Learn how and when to perform safe overtaking manoeuvres.",
   "initialScore": 100,
   "trafficLight": { "redSeconds": 5, "yellowSeconds": 2, "greenSeconds": 5 },
   "vehicleSpawnInterval": 4,
-  "vehicleSpeed": 2.5,
+  "vehicleSpeed": 2.6,
   "rewards": {
-    "waitForWalk": 0,
-    "useCrossing": 0,
-    "reachSidewalk": 0,
-    "unsafeCrossing": 0,
-    "vehicleCollision": -50
+    "safeOvertake": 25,
+    "patientWait": 15,
+    "correctSignal": 10,
+    "unsafeManoeuvre": -15,
+    "vehicleCollision": -25
   },
   "missions": [
     {
-      "missionId": "pull_over",
-      "description": "Pull over to the side of the road and stop for emergency vehicles.",
+      "missionId": "know_your_road",
+      "title": "KNOW YOUR ROAD",
+      "description": "Identify road markings and restrictions before attempting an overtake.",
       "trafficRule": {
-        "ruleId": "emergency_vehicle",
-        "title": "Yield to Emergency Vehicles",
-        "description": "When you hear a siren or see flashing lights, pull over to the shoulder and stop completely."
+        "ruleId": "road_markings",
+        "title": "Observe Road Markings",
+        "description": "Dashed center lines permit overtaking when clear. Solid center lines strictly prohibit overtaking."
+      },
+      "reward": 25
+    },
+    {
+      "missionId": "find_safe_gap",
+      "title": "FIND THE SAFE GAP",
+      "description": "Assess oncoming traffic speed and distance. Wait for tight gaps to clear, then pass during safe gaps.",
+      "trafficRule": {
+        "ruleId": "traffic_gaps",
+        "title": "Judge Oncoming Traffic",
+        "description": "Only overtake when the oncoming lane has enough clear distance to complete the pass safely."
+      },
+      "reward": 25
+    },
+    {
+      "missionId": "when_not_to_overtake",
+      "title": "KNOW WHEN NOT TO OVERTAKE",
+      "description": "Hold safe following distance behind traffic on blind bends and crossings without overtaking.",
+      "trafficRule": {
+        "ruleId": "prohibited_zones",
+        "title": "Hazardous Zones",
+        "description": "Never overtake on blind bends, hill crests, pedestrian crossings, or intersections."
+      },
+      "reward": 25
+    },
+    {
+      "missionId": "complete_the_overtake",
+      "title": "COMPLETE THE OVERTAKE",
+      "description": "Execute the full 7-step safe sequence: Distance -> Signal Left -> Pass -> Clearance -> Signal Right -> Return.",
+      "trafficRule": {
+        "ruleId": "overtaking_sequence",
+        "title": "The Safe Overtake Sequence",
+        "description": "Always signal before moving out and before returning, and allow adequate clearance before re-entering."
+      },
+      "reward": 25
+    },
+    {
+      "missionId": "the_overtaking_test",
+      "title": "THE OVERTAKING TEST",
+      "description": "Apply all skills in a continuous driving challenge: decide when to wait and when to pass safely.",
+      "trafficRule": {
+        "ruleId": "safe_overtaking_test",
+        "title": "Master of Safe Overtaking",
+        "description": "Sound judgement, patience, and correct signaling are the hallmarks of a safe driver."
       },
       "reward": 30
     }
-  ],
-  "emergencyVehicleSpawnChance": 0.3,
-  "sirenAudioTriggers": true
+  ]
 }

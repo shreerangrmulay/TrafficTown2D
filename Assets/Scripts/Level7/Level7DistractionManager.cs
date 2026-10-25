@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,7 +23,10 @@ namespace TrafficTown2D.Level7
         private List<DistractionType> allowedTypes = new List<DistractionType>();
         private readonly HashSet<string> triggeredSmartLocations = new HashSet<string>();
 
-        public bool IsDistractionActive => distractionUI != null && distractionUI.IsVisible;
+        private Coroutine activeDistractionRoutine;
+        private DistractionEventData currentEventData;
+
+        public bool IsDistractionActive => activeDistractionRoutine != null || (distractionUI != null && distractionUI.IsVisible);
 
         public event Action<DistractionEventData> DistractionSpawned;
         public event Action<DistractionEventData, bool> DistractionResolved; // (data, wasSafe)
@@ -44,11 +48,15 @@ namespace TrafficTown2D.Level7
                 playerCar = FindAnyObjectByType<Level7PlayerCar>();
             }
 
+            if (distractionUI == null)
+            {
+                distractionUI = FindAnyObjectByType<Level7DistractionUI>(FindObjectsInactive.Include);
+            }
+
             if (distractionUI != null)
             {
                 distractionUI.ActionClicked += HandleActionAttempt;
                 distractionUI.IgnoreClicked += HandleIgnore;
-                distractionUI.TimeoutExpired += HandleTimeout;
             }
 
             ResetTimer();
@@ -56,11 +64,16 @@ namespace TrafficTown2D.Level7
 
         private void OnDestroy()
         {
+            if (activeDistractionRoutine != null)
+            {
+                StopCoroutine(activeDistractionRoutine);
+                activeDistractionRoutine = null;
+            }
+
             if (distractionUI != null)
             {
                 distractionUI.ActionClicked -= HandleActionAttempt;
                 distractionUI.IgnoreClicked -= HandleIgnore;
-                distractionUI.TimeoutExpired -= HandleTimeout;
             }
         }
 
@@ -72,18 +85,14 @@ namespace TrafficTown2D.Level7
             autoSpawningEnabled = autoSpawn;
             triggeredSmartLocations.Clear();
 
-            if (distractionUI != null && distractionUI.IsVisible)
-            {
-                distractionUI.HideDistraction();
-            }
-
+            DismissDistraction(true);
             ResetTimer();
         }
 
         private void Update()
         {
             if (!autoSpawningEnabled || allowedTypes == null || allowedTypes.Count == 0) return;
-            if (distractionUI != null && distractionUI.IsVisible) return;
+            if (IsDistractionActive) return;
 
             spawnTimer += Time.deltaTime;
             if (spawnTimer >= nextSpawnDelay)
@@ -96,10 +105,24 @@ namespace TrafficTown2D.Level7
         public void TriggerDistraction(DistractionType type)
         {
             if (distractionUI == null) return;
-            if (distractionUI.IsVisible) return;
+            if (IsDistractionActive) return;
 
             DistractionEventData data = DistractionEventData.CreateDefault(type);
-            distractionUI.ShowDistraction(data);
+            TriggerDistractionDirect(data);
+        }
+
+        public void TriggerDistractionDirect(DistractionEventData data)
+        {
+            if (distractionUI == null || data == null) return;
+            if (IsDistractionActive) return;
+
+            if (activeDistractionRoutine != null)
+            {
+                StopCoroutine(activeDistractionRoutine);
+                activeDistractionRoutine = null;
+            }
+
+            activeDistractionRoutine = StartCoroutine(DistractionSequenceRoutine(data));
             DistractionSpawned?.Invoke(data);
         }
 
@@ -125,8 +148,85 @@ namespace TrafficTown2D.Level7
             nextSpawnDelay = UnityEngine.Random.Range(minInterval, maxInterval);
         }
 
+        private IEnumerator DistractionSequenceRoutine(DistractionEventData data)
+        {
+            currentEventData = data;
+
+            // 1. Activate DistractionCard GameObject FIRST
+            distractionUI.gameObject.SetActive(true);
+
+            // 2. Populate text and visuals
+            distractionUI.SetupCard(data);
+
+            // 3. Play slide-in animation (hosted safely on DistractionManager)
+            yield return StartCoroutine(distractionUI.AnimateSlideRoutine(true));
+
+            // 4. Run countdown timer
+            float duration = data.displayDuration;
+            float remaining = duration;
+            while (remaining > 0f)
+            {
+                remaining -= Time.deltaTime;
+                distractionUI.UpdateCountdownBar(Mathf.Clamp01(remaining / duration));
+                yield return null;
+            }
+
+            // 5. Timed out naturally! Player ignored the distraction while driving
+            HandleTimeout(data);
+            if (distractionUI != null)
+            {
+                distractionUI.TriggerTimeoutExpired(data);
+            }
+
+            // 6. Play slide-out animation (hosted safely on DistractionManager)
+            yield return StartCoroutine(distractionUI.AnimateSlideRoutine(false));
+
+            // 7. Deactivate DistractionCard AFTER animation completes
+            distractionUI.gameObject.SetActive(false);
+            distractionUI.SnapHidden();
+            activeDistractionRoutine = null;
+            currentEventData = null;
+        }
+
+        public void DismissDistraction(bool immediate = false)
+        {
+            if (activeDistractionRoutine != null)
+            {
+                StopCoroutine(activeDistractionRoutine);
+                activeDistractionRoutine = null;
+            }
+
+            if (distractionUI == null) return;
+
+            if (immediate || !distractionUI.gameObject.activeInHierarchy)
+            {
+                distractionUI.SnapHidden();
+                distractionUI.gameObject.SetActive(false);
+                currentEventData = null;
+            }
+            else
+            {
+                activeDistractionRoutine = StartCoroutine(DismissRoutine());
+            }
+        }
+
+        private IEnumerator DismissRoutine()
+        {
+            if (distractionUI != null && distractionUI.gameObject.activeInHierarchy)
+            {
+                yield return StartCoroutine(distractionUI.AnimateSlideRoutine(false));
+                distractionUI.gameObject.SetActive(false);
+                distractionUI.SnapHidden();
+            }
+            activeDistractionRoutine = null;
+            currentEventData = null;
+        }
+
         private void HandleActionAttempt(DistractionEventData data)
         {
+            if (data == null) data = currentEventData;
+            if (data == null) return;
+
             bool carStopped = playerCar != null && playerCar.IsStopped;
             bool insideSafeStop = Level7SafeStopZone.IsPlayerInAnySafeStop();
 
@@ -148,19 +248,29 @@ namespace TrafficTown2D.Level7
                 }
                 DistractionResolved?.Invoke(data, false);
             }
+
+            DismissDistraction(false);
         }
 
         private void HandleIgnore(DistractionEventData data)
         {
+            if (data == null) data = currentEventData;
+            if (data == null) return;
+
             if (Level7FocusManager.Instance != null)
             {
                 Level7FocusManager.Instance.RecordDistractionIgnored(data);
             }
             DistractionResolved?.Invoke(data, true);
+
+            DismissDistraction(false);
         }
 
         private void HandleTimeout(DistractionEventData data)
         {
+            if (data == null) data = currentEventData;
+            if (data == null) return;
+
             // Auto dismissed while player kept driving
             if (Level7FocusManager.Instance != null)
             {

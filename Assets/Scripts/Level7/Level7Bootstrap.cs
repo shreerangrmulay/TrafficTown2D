@@ -249,17 +249,24 @@ namespace TrafficTown2D.Level7
             CreateWorldSprite(roads.transform, "Corner_NW_Pad", new Vector3(-35f, 20f, 0f), new Vector3(7.4f, 7.4f, 1f), roadCol, 2);
 
             // Outer corner curbs
-            CreateWorldSprite(roads.transform, "Corner_SE_CurbS", new Vector3(35f, -23.78f, 0f), new Vector3(7.4f, 0.35f, 1f), curbCol, 3);
-            CreateWorldSprite(roads.transform, "Corner_SE_CurbE", new Vector3(38.78f, -20f, 0f), new Vector3(0.35f, 7.4f, 1f), curbCol, 3);
+            AddCurbCollider(CreateWorldSprite(roads.transform, "Corner_SE_CurbS", new Vector3(35f, -23.78f, 0f), new Vector3(7.4f, 0.35f, 1f), curbCol, 3), new Vector2(7.4f, 0.35f));
+            AddCurbCollider(CreateWorldSprite(roads.transform, "Corner_SE_CurbE", new Vector3(38.78f, -20f, 0f), new Vector3(0.35f, 7.4f, 1f), curbCol, 3), new Vector2(0.35f, 7.4f));
 
-            CreateWorldSprite(roads.transform, "Corner_NE_CurbN", new Vector3(35f, 23.78f, 0f), new Vector3(7.4f, 0.35f, 1f), curbCol, 3);
-            CreateWorldSprite(roads.transform, "Corner_NE_CurbE", new Vector3(38.78f, 20f, 0f), new Vector3(0.35f, 7.4f, 1f), curbCol, 3);
+            AddCurbCollider(CreateWorldSprite(roads.transform, "Corner_NE_CurbN", new Vector3(35f, 23.78f, 0f), new Vector3(7.4f, 0.35f, 1f), curbCol, 3), new Vector2(7.4f, 0.35f));
+            AddCurbCollider(CreateWorldSprite(roads.transform, "Corner_NE_CurbE", new Vector3(38.78f, 20f, 0f), new Vector3(0.35f, 7.4f, 1f), curbCol, 3), new Vector2(0.35f, 7.4f));
 
-            CreateWorldSprite(roads.transform, "Corner_SW_CurbS", new Vector3(-35f, -23.78f, 0f), new Vector3(7.4f, 0.35f, 1f), curbCol, 3);
-            CreateWorldSprite(roads.transform, "Corner_SW_CurbW", new Vector3(-38.78f, -20f, 0f), new Vector3(0.35f, 7.4f, 1f), curbCol, 3);
+            AddCurbCollider(CreateWorldSprite(roads.transform, "Corner_SW_CurbS", new Vector3(-35f, -23.78f, 0f), new Vector3(7.4f, 0.35f, 1f), curbCol, 3), new Vector2(7.4f, 0.35f));
+            AddCurbCollider(CreateWorldSprite(roads.transform, "Corner_SW_CurbW", new Vector3(-38.78f, -20f, 0f), new Vector3(0.35f, 7.4f, 1f), curbCol, 3), new Vector2(0.35f, 7.4f));
 
-            CreateWorldSprite(roads.transform, "Corner_NW_CurbN", new Vector3(-35f, 23.78f, 0f), new Vector3(7.4f, 0.35f, 1f), curbCol, 3);
-            CreateWorldSprite(roads.transform, "Corner_NW_CurbW", new Vector3(-38.78f, 20f, 0f), new Vector3(0.35f, 7.4f, 1f), curbCol, 3);
+            AddCurbCollider(CreateWorldSprite(roads.transform, "Corner_NW_CurbN", new Vector3(-35f, 23.78f, 0f), new Vector3(7.4f, 0.35f, 1f), curbCol, 3), new Vector2(7.4f, 0.35f));
+            AddCurbCollider(CreateWorldSprite(roads.transform, "Corner_NW_CurbW", new Vector3(-38.78f, 20f, 0f), new Vector3(0.35f, 7.4f, 1f), curbCol, 3), new Vector2(0.35f, 7.4f));
+        }
+
+        private static void AddCurbCollider(GameObject obj, Vector2 size)
+        {
+            if (obj == null) return;
+            BoxCollider2D col = obj.AddComponent<BoxCollider2D>();
+            col.size = size;
         }
 
         private static void CreateRoadSection(Transform parent, string name, Vector3 pos, Vector2 size, Color roadCol, Color curbCol, Color lineCol, bool isHorizontal, bool hasCurb1, bool hasCurb2)
@@ -280,8 +287,8 @@ namespace TrafficTown2D.Level7
                     CreateWorldSprite(seg.transform, $"Dash_{i}", new Vector3(x, 0f, 0f), new Vector3(1.8f, 0.22f, 1f), lineCol, 1);
                 }
 
-                if (hasCurb1) CreateWorldSprite(seg.transform, "Curb_Top", new Vector3(0f, size.y * 0.5f + 0.17f, 0f), new Vector3(size.x, 0.35f, 1f), curbCol, 1);
-                if (hasCurb2) CreateWorldSprite(seg.transform, "Curb_Bottom", new Vector3(0f, -size.y * 0.5f - 0.17f, 0f), new Vector3(size.x, 0.35f, 1f), curbCol, 1);
+                if (hasCurb1) AddCurbCollider(CreateWorldSprite(seg.transform, "Curb_Top", new Vector3(0f, size.y * 0.5f + 0.17f, 0f), new Vector3(size.x, 0.35f, 1f), curbCol, 1), new Vector2(size.x, 0.35f));
+                if (hasCurb2) AddCurbCollider(CreateWorldSprite(seg.transform, "Curb_Bottom", new Vector3(0f, -size.y * 0.5f - 0.17f, 0f), new Vector3(size.x, 0.35f, 1f), curbCol, 1), new Vector2(size.x, 0.35f));
             }
             else
             {
@@ -292,8 +299,8 @@ namespace TrafficTown2D.Level7
                     CreateWorldSprite(seg.transform, $"Dash_{i}", new Vector3(0f, y, 0f), new Vector3(0.22f, 1.8f, 1f), lineCol, 1);
                 }
 
-                if (hasCurb1) CreateWorldSprite(seg.transform, "Curb_Left", new Vector3(-size.x * 0.5f - 0.17f, 0f, 0f), new Vector3(0.35f, size.y, 1f), curbCol, 1);
-                if (hasCurb2) CreateWorldSprite(seg.transform, "Curb_Right", new Vector3(size.x * 0.5f + 0.17f, 0f, 0f), new Vector3(0.35f, size.y, 1f), curbCol, 1);
+                if (hasCurb1) AddCurbCollider(CreateWorldSprite(seg.transform, "Curb_Left", new Vector3(-size.x * 0.5f - 0.17f, 0f, 0f), new Vector3(0.35f, size.y, 1f), curbCol, 1), new Vector2(0.35f, size.y));
+                if (hasCurb2) AddCurbCollider(CreateWorldSprite(seg.transform, "Curb_Right", new Vector3(size.x * 0.5f + 0.17f, 0f, 0f), new Vector3(0.35f, size.y, 1f), curbCol, 1), new Vector2(0.35f, size.y));
             }
         }
 
@@ -482,6 +489,8 @@ namespace TrafficTown2D.Level7
             SpriteRenderer blL = CreateBrakeLight(car.transform, "Brake_L", new Vector3(-0.65f, -1.6f, 0f));
             SpriteRenderer blR = CreateBrakeLight(car.transform, "Brake_R", new Vector3(0.65f, -1.6f, 0f));
             SetField(playerCar, "brakeLights", new[] { blL, blR });
+
+            GetOrAdd<TrafficTown2D.Player.CarIndicatorController>(car);
 
             return car;
         }

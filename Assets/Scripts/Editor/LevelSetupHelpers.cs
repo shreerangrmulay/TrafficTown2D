@@ -149,6 +149,7 @@ namespace TrafficTown2D.Editor
             body.gravityScale = 0f; body.freezeRotation = true;
             BoxCollider2D col = GetOrAdd<BoxCollider2D>(car);
             col.size = new Vector2(1.5f, 0.75f);
+            GetOrAdd<CarIndicatorController>(car);
             return car;
         }
 
@@ -286,7 +287,9 @@ namespace TrafficTown2D.Editor
             SetRect(card.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(440f, 320f));
 
             TextMeshProUGUI titleTxt = CreateUIText(card.transform, "Title", title, 24, TextAlignmentOptions.Center, new Vector2(400f, 36f), new Vector2(0f, 110f), new Vector2(0.5f, 0.5f));
+            titleTxt.raycastTarget = false;
             TextMeshProUGUI msgTxt = CreateUIText(card.transform, "Message", message, 16, TextAlignmentOptions.Center, new Vector2(380f, 120f), new Vector2(0f, 10f), new Vector2(0.5f, 0.5f));
+            msgTxt.raycastTarget = false;
 
             Button gotItBtn = GetOrAddChildButton(card.transform, "GotItButton", "GOT IT!", new Vector2(0f, -120f), roundedSprite);
             LevelIntroController intro = GetOrAdd<LevelIntroController>(introPanel);
@@ -294,6 +297,7 @@ namespace TrafficTown2D.Editor
             SetReference(intro, "gotItButton", gotItBtn);
             SetReference(intro, "titleText", titleTxt);
             SetReference(intro, "messageText", msgTxt);
+            UnityEventTools.AddPersistentListener(gotItBtn.onClick, intro.DismissIntro);
         }
 
         // ─── Standard Road ────────────────────────────────────────────────
@@ -359,6 +363,7 @@ namespace TrafficTown2D.Editor
             GetOrAdd<AnimatedUIButton>(go);
             TextMeshProUGUI t = CreateUIText(go.transform, "Text", label, 18, TextAlignmentOptions.Center, new Vector2(230f, 40f), Vector2.zero, new Vector2(0.5f, 0.5f));
             t.fontStyle = FontStyles.Bold;
+            t.raycastTarget = false;
             return btn;
         }
 

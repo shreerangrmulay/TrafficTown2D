@@ -12,6 +12,7 @@ using TMPro;
 using TrafficTown2D.Core;
 using TrafficTown2D.Level3;
 using TrafficTown2D.Level4;
+using TrafficTown2D.Player;
 using TrafficTown2D.UI;
 
 namespace TrafficTown2D.Editor
@@ -237,9 +238,24 @@ namespace TrafficTown2D.Editor
             CreateWorldSprite(world, "LeftSidewalk", new Vector3(-4.5f, 95f, 0f), new Vector3(2.4f, 240f, 1f), NightSidewalkColor, -12);
             CreateWorldSprite(world, "RightSidewalk", new Vector3(4.5f, 95f, 0f), new Vector3(2.4f, 240f, 1f), NightSidewalkColor, -12);
 
-            // 4. Curbs
-            CreateWorldSprite(world, "LeftCurb", new Vector3(-3.3f, 95f, 0f), new Vector3(0.18f, 240f, 1f), NightCurbColor, -9);
-            CreateWorldSprite(world, "RightCurb", new Vector3(3.3f, 95f, 0f), new Vector3(0.18f, 240f, 1f), NightCurbColor, -9);
+            // 4. Curbs & Physical Road Boundaries
+            GameObject leftCurb = CreateWorldSprite(world, "LeftCurb", new Vector3(-3.3f, 95f, 0f), new Vector3(0.18f, 240f, 1f), NightCurbColor, -9);
+            BoxCollider2D lCol = leftCurb.AddComponent<BoxCollider2D>();
+            lCol.size = new Vector2(0.35f, 240f);
+
+            GameObject rightCurb = CreateWorldSprite(world, "RightCurb", new Vector3(3.3f, 95f, 0f), new Vector3(0.18f, 240f, 1f), NightCurbColor, -9);
+            BoxCollider2D rCol = rightCurb.AddComponent<BoxCollider2D>();
+            rCol.size = new Vector2(0.35f, 240f);
+
+            GameObject bottomWall = FindOrCreateChild(world, "BottomBoundaryWall");
+            bottomWall.transform.position = new Vector3(0f, -20.5f, 0f);
+            BoxCollider2D bCol = GetOrAdd<BoxCollider2D>(bottomWall);
+            bCol.size = new Vector2(10f, 1f);
+
+            GameObject topWall = FindOrCreateChild(world, "TopBoundaryWall");
+            topWall.transform.position = new Vector3(0f, 205.5f, 0f);
+            BoxCollider2D tCol = GetOrAdd<BoxCollider2D>(topWall);
+            tCol.size = new Vector2(10f, 1f);
 
             // 5. Dashed Center Line (Yellow)
             GameObject centerLines = FindOrCreateChild(world, "CenterDashedLines");
@@ -419,6 +435,8 @@ namespace TrafficTown2D.Editor
             SetReference(hlCtrl, "leftBeamCone", coneL);
             SetReference(hlCtrl, "rightBeamCone", coneR);
             SetObjectArray(hlCtrl, "bulbRenderers", new[] { hlLeft, hlRight });
+
+            GetOrAdd<CarIndicatorController>(car);
 
             return car;
         }

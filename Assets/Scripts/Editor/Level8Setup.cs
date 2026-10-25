@@ -4,14 +4,14 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TrafficTown2D.Core;
-using TrafficTown2D.Gameplay;
-using TrafficTown2D.Player;
-using TrafficTown2D.Traffic;
-using TrafficTown2D.UI;
+using TrafficTown2D.Level8;
 
 namespace TrafficTown2D.Editor
 {
-    /// <summary>Level 8 – Emergency Vehicles.</summary>
+    /// <summary>
+    /// Editor setup script for Level 8 — THE OVERTAKE.
+    /// Bakes the connected road environment, vehicles, signs, and UI into Assets/Scenes/Level8.unity.
+    /// </summary>
     public static class Level8Setup
     {
         private const string ScenePath = "Assets/Scenes/Level8.unity";
@@ -21,53 +21,53 @@ namespace TrafficTown2D.Editor
         {
             if (EditorApplication.isPlaying) { Debug.LogWarning("Stop Play Mode first."); return; }
             LevelSetupHelpers.EnsureAssetFolders();
-            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            EditorSceneManager.SaveScene(scene, ScenePath);
-            LevelSetupHelpers.EnsureCamera(); LevelSetupHelpers.EnsureGlobalLight(); LevelSetupHelpers.EnsureEventSystem();
 
-            GameObject services = LevelSetupHelpers.FindOrCreate("Services");
-            SceneLoader sceneLoader = LevelSetupHelpers.GetOrAdd<SceneLoader>(services);
-            LevelSetupHelpers.GetOrAdd<GameManager>(services);
+            Scene scene;
+            try
+            {
+                scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            }
+            catch
+            {
+                scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                EditorSceneManager.SaveScene(scene, ScenePath);
+            }
 
-            // Environment
-            GameObject env = LevelSetupHelpers.FindOrCreate("Environment");
-            LevelSetupHelpers.CreateStandardRoad(env.transform);
+            if (!scene.IsValid())
+            {
+                scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                EditorSceneManager.SaveScene(scene, ScenePath);
+            }
 
-            // Road shoulder (pull-over area)
-            LevelSetupHelpers.CreateSprite(env.transform, "ShoulderStripe", new Vector3(0f, -2.0f, -0.02f), new Vector3(22f, 0.2f, 1f), new Color(1f, 1f, 1f, 0.4f), 2, false);
+            // Remove legacy placeholder objects if present
+            GameObject oldEnv = GameObject.Find("Environment");
+            if (oldEnv != null && oldEnv.transform.Find("ShoulderStripe") != null)
+            {
+                Object.DestroyImmediate(oldEnv);
+            }
+            GameObject oldGameplay = GameObject.Find("Gameplay");
+            if (oldGameplay != null && oldGameplay.GetComponent<Level8OvertakeManager>() == null)
+            {
+                Object.DestroyImmediate(oldGameplay);
+            }
+            GameObject oldTraffic = GameObject.Find("Traffic");
+            if (oldTraffic != null && oldTraffic.transform.Find("TopLane") != null)
+            {
+                Object.DestroyImmediate(oldTraffic);
+            }
+            GameObject uiObj = GameObject.Find("UI");
+            if (uiObj != null)
+            {
+                Transform oldHud = uiObj.transform.Find("HUD");
+                if (oldHud != null) Object.DestroyImmediate(oldHud.gameObject);
+            }
 
-            // Emergency spawn point
-            GameObject emergencySpawn = LevelSetupHelpers.FindOrCreateChild(env.transform, "EmergencySpawnPoint");
-            emergencySpawn.transform.position = new Vector3(-12f, -1.1f, 0f);
-
-            // Traffic
-            GameObject traffic = LevelSetupHelpers.FindOrCreate("Traffic");
-            LevelSetupHelpers.CreateDefaultTrafficLane(traffic.transform, "TopLane", new Vector3(-9.5f, 1.1f, 0f), new Vector3(9.5f, 1.1f, 0f), 1f);
-
-            // Player
-            GameObject playerCar = LevelSetupHelpers.CreatePlayerCar(new Vector3(-7f, -1.1f, 0f));
-            CarPlayerController carCtrl = LevelSetupHelpers.GetOrAdd<CarPlayerController>(playerCar);
-            LevelSetupHelpers.SetBool(carCtrl, "allowVerticalMovement", true);
-
-            // Gameplay
-            GameObject gameplay = LevelSetupHelpers.FindOrCreate("Gameplay");
-            ScoreManager score = LevelSetupHelpers.GetOrAdd<ScoreManager>(LevelSetupHelpers.FindOrCreateChild(gameplay.transform, "ScoreManager"));
-            EmergencyVehicleController ctrl = LevelSetupHelpers.GetOrAdd<EmergencyVehicleController>(playerCar);
-            LevelSetupHelpers.SetReference(ctrl, "playerCar", carCtrl);
-            LevelSetupHelpers.SetReference(ctrl, "scoreManager", score);
-            LevelSetupHelpers.SetReference(ctrl, "emergencySpawnPoint", emergencySpawn.transform);
-
-            // UI
-            LevelUIController ui = LevelSetupHelpers.CreateStandardUI(score, sceneLoader, "React to emergency vehicles! Pull over and stop.");
-            FeedbackController fc = Object.FindAnyObjectByType<FeedbackController>(FindObjectsInactive.Include);
-            LevelSetupHelpers.SetReference(ctrl, "feedback", fc);
-            LevelSetupHelpers.SetReference(ctrl, "levelUI", ui);
-            LevelSetupHelpers.CreateIntroPanel("EMERGENCY VEHICLES", "When you see flashing lights:\n1. Pull over (W/S).\n2. STOP completely.\n3. Wait for it to pass.");
+            Level8Bootstrap.EnsureLevel8Scene();
 
             LevelSetupHelpers.AddSceneToBuild(ScenePath);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
-            Debug.Log("Level 8 (Emergency Vehicles) setup completed.");
+            Debug.Log("Level 8 (The Overtake) setup completed and saved to Assets/Scenes/Level8.unity.");
         }
     }
 }

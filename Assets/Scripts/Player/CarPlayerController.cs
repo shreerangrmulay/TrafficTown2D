@@ -28,11 +28,20 @@ namespace TrafficTown2D.Player
             set => maxSpeed = Mathf.Max(0f, value);
         }
 
+        [Header("Turn Signals & Indicators")]
+        [SerializeField] private CarIndicatorController indicatorController;
+
+        /// <summary>Access to the indicator controller component.</summary>
+        public CarIndicatorController IndicatorController => indicatorController;
+
         /// <summary>True if the left turn signal is currently active.</summary>
-        public bool LeftSignalActive { get; private set; }
+        public bool LeftSignalActive => indicatorController != null ? indicatorController.LeftSignalActive : internalLeftSignal;
 
         /// <summary>True if the right turn signal is currently active.</summary>
-        public bool RightSignalActive { get; private set; }
+        public bool RightSignalActive => indicatorController != null ? indicatorController.RightSignalActive : internalRightSignal;
+
+        private bool internalLeftSignal;
+        private bool internalRightSignal;
 
         /// <summary>Event invoked when a turn signal is toggled. Parameter: +1 right, -1 left, 0 off.</summary>
         public event System.Action<int> TurnSignalChanged;
@@ -42,6 +51,30 @@ namespace TrafficTown2D.Player
             body = GetComponent<Rigidbody2D>();
             body.gravityScale = 0f;
             body.freezeRotation = true;
+
+            if (indicatorController == null) indicatorController = GetComponent<CarIndicatorController>();
+            if (indicatorController == null) indicatorController = gameObject.AddComponent<CarIndicatorController>();
+            if (indicatorController != null)
+            {
+                indicatorController.TurnSignalChanged += OnIndicatorTurnSignalChanged;
+            }
+
+            RoadBoundaryKeeper.AttachActivePlayerCar(gameObject);
+        }
+
+        private void OnDestroy()
+        {
+            if (indicatorController != null)
+            {
+                indicatorController.TurnSignalChanged -= OnIndicatorTurnSignalChanged;
+            }
+        }
+
+        private void OnIndicatorTurnSignalChanged(int signal)
+        {
+            internalLeftSignal = indicatorController.LeftSignalActive;
+            internalRightSignal = indicatorController.RightSignalActive;
+            TurnSignalChanged?.Invoke(signal);
         }
 
         private void Update()
@@ -90,10 +123,14 @@ namespace TrafficTown2D.Player
         /// <summary>Cancels all turn signals.</summary>
         public void CancelSignals()
         {
-            if (LeftSignalActive || RightSignalActive)
+            if (indicatorController != null)
             {
-                LeftSignalActive = false;
-                RightSignalActive = false;
+                indicatorController.CancelSignals();
+            }
+            else
+            {
+                internalLeftSignal = false;
+                internalRightSignal = false;
                 TurnSignalChanged?.Invoke(0);
             }
         }
@@ -120,20 +157,23 @@ namespace TrafficTown2D.Player
 
         private void ReadTurnSignalInput()
         {
+            // If indicatorController is active, it handles input in its own Update
+            if (indicatorController != null) return;
+
             if (Keyboard.current == null) return;
 
             if (Keyboard.current.qKey.wasPressedThisFrame)
             {
-                LeftSignalActive = !LeftSignalActive;
-                if (LeftSignalActive) RightSignalActive = false;
-                TurnSignalChanged?.Invoke(LeftSignalActive ? -1 : 0);
+                internalLeftSignal = !internalLeftSignal;
+                if (internalLeftSignal) internalRightSignal = false;
+                TurnSignalChanged?.Invoke(internalLeftSignal ? -1 : 0);
             }
 
             if (Keyboard.current.eKey.wasPressedThisFrame)
             {
-                RightSignalActive = !RightSignalActive;
-                if (RightSignalActive) LeftSignalActive = false;
-                TurnSignalChanged?.Invoke(RightSignalActive ? 1 : 0);
+                internalRightSignal = !internalRightSignal;
+                if (internalRightSignal) internalLeftSignal = false;
+                TurnSignalChanged?.Invoke(internalRightSignal ? 1 : 0);
             }
         }
     }

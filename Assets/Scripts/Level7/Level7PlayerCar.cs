@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using TrafficTown2D.Core;
+using TrafficTown2D.Player;
 
 namespace TrafficTown2D.Level7
 {
@@ -50,6 +51,13 @@ namespace TrafficTown2D.Level7
         public event Action<Collision2D> CarCollided;
         public event Action<bool> BrakeChanged;
 
+        [Header("Indicators & Signals")]
+        [SerializeField] private CarIndicatorController indicatorController;
+        public CarIndicatorController IndicatorController => indicatorController;
+        public bool LeftSignalActive => indicatorController != null && indicatorController.LeftSignalActive;
+        public bool RightSignalActive => indicatorController != null && indicatorController.RightSignalActive;
+        public event Action<int> TurnSignalChanged;
+
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
@@ -60,6 +68,33 @@ namespace TrafficTown2D.Level7
                 rb.freezeRotation = true;
                 rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             }
+
+            if (indicatorController == null) indicatorController = GetComponent<CarIndicatorController>();
+            if (indicatorController == null) indicatorController = gameObject.AddComponent<CarIndicatorController>();
+            if (indicatorController != null)
+            {
+                indicatorController.TurnSignalChanged += OnIndicatorTurnSignalChanged;
+            }
+
+            RoadBoundaryKeeper.AttachActivePlayerCar(gameObject);
+        }
+
+        private void OnDestroy()
+        {
+            if (indicatorController != null)
+            {
+                indicatorController.TurnSignalChanged -= OnIndicatorTurnSignalChanged;
+            }
+        }
+
+        private void OnIndicatorTurnSignalChanged(int signal)
+        {
+            TurnSignalChanged?.Invoke(signal);
+        }
+
+        public void CancelSignals()
+        {
+            if (indicatorController != null) indicatorController.CancelSignals();
         }
 
         private void Start()

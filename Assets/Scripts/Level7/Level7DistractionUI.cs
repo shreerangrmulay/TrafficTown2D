@@ -27,11 +27,9 @@ namespace TrafficTown2D.Level7
 
         private DistractionEventData currentData;
         private Coroutine activeAnimRoutine;
-        private Coroutine activeTimerRoutine;
-        private float remainingTime;
         private bool isVisible = false;
 
-        public bool IsVisible => isVisible;
+        public bool IsVisible => isVisible && gameObject.activeInHierarchy;
         public DistractionEventData CurrentData => currentData;
 
         public event Action<DistractionEventData> ActionClicked;
@@ -52,80 +50,39 @@ namespace TrafficTown2D.Level7
                 ignoreButton.onClick.AddListener(HandleIgnoreClicked);
             }
 
-            // Start hidden
-            if (canvasGroup != null) canvasGroup.alpha = 0f;
-            if (cardRect != null) cardRect.anchoredPosition = hiddenOffset;
+            // Start hidden and deactivated
+            SnapHidden();
             gameObject.SetActive(false);
         }
 
-        public void ShowDistraction(DistractionEventData data)
+        public void SnapHidden()
+        {
+            isVisible = false;
+            if (canvasGroup != null) canvasGroup.alpha = 0f;
+            if (cardRect != null) cardRect.anchoredPosition = hiddenOffset;
+        }
+
+        public void SetupCard(DistractionEventData data)
         {
             currentData = data;
             if (data == null) return;
-
-            gameObject.SetActive(true);
 
             if (titleText != null) titleText.text = data.headerTitle;
             if (messageText != null) messageText.text = data.messageText;
             if (actionButtonText != null) actionButtonText.text = data.actionButtonLabel;
             if (ignoreButtonText != null) ignoreButtonText.text = data.ignoreButtonLabel;
-
             if (countdownBar != null) countdownBar.fillAmount = 1f;
-
-            if (activeAnimRoutine != null) StopCoroutine(activeAnimRoutine);
-            if (activeTimerRoutine != null) StopCoroutine(activeTimerRoutine);
-
-            activeAnimRoutine = StartCoroutine(AnimateCard(true));
-            activeTimerRoutine = StartCoroutine(CountdownRoutine(data.displayDuration));
         }
 
-        public void HideDistraction()
+        public void UpdateCountdownBar(float fillAmount)
         {
-            if (!isVisible && !gameObject.activeSelf) return;
-
-            if (activeTimerRoutine != null)
+            if (countdownBar != null)
             {
-                StopCoroutine(activeTimerRoutine);
-                activeTimerRoutine = null;
+                countdownBar.fillAmount = Mathf.Clamp01(fillAmount);
             }
-
-            if (activeAnimRoutine != null) StopCoroutine(activeAnimRoutine);
-            activeAnimRoutine = StartCoroutine(AnimateCard(false));
         }
 
-        private IEnumerator CountdownRoutine(float duration)
-        {
-            remainingTime = duration;
-            while (remainingTime > 0f)
-            {
-                remainingTime -= Time.deltaTime;
-                if (countdownBar != null)
-                {
-                    countdownBar.fillAmount = Mathf.Clamp01(remainingTime / duration);
-                }
-                yield return null;
-            }
-
-            // Timed out: naturally ignored by driver!
-            TimeoutExpired?.Invoke(currentData);
-            HideDistraction();
-        }
-
-        private void HandleActionClicked()
-        {
-            if (!isVisible) return;
-            ActionClicked?.Invoke(currentData);
-            HideDistraction();
-        }
-
-        private void HandleIgnoreClicked()
-        {
-            if (!isVisible) return;
-            IgnoreClicked?.Invoke(currentData);
-            HideDistraction();
-        }
-
-        private IEnumerator AnimateCard(bool show)
+        public IEnumerator AnimateSlideRoutine(bool show)
         {
             isVisible = show;
             float elapsed = 0f;
@@ -148,12 +105,69 @@ namespace TrafficTown2D.Level7
 
             if (cardRect != null) cardRect.anchoredPosition = endPos;
             if (canvasGroup != null) canvasGroup.alpha = endAlpha;
+            isVisible = show;
+            activeAnimRoutine = null;
+        }
 
-            if (!show)
+        public void ShowDistraction(DistractionEventData data)
+        {
+            // Delegate directly to the persistent Level7DistractionManager if present
+            if (Level7DistractionManager.Instance != null)
+            {
+                Level7DistractionManager.Instance.TriggerDistractionDirect(data);
+                return;
+            }
+
+            // Standalone fallback: only start routine if strictly active in hierarchy
+            currentData = data;
+            if (data == null) return;
+
+            gameObject.SetActive(true);
+            SetupCard(data);
+
+            if (gameObject.activeInHierarchy)
+            {
+                if (activeAnimRoutine != null) StopCoroutine(activeAnimRoutine);
+                activeAnimRoutine = StartCoroutine(AnimateSlideRoutine(true));
+            }
+        }
+
+        public void HideDistraction()
+        {
+            if (Level7DistractionManager.Instance != null && Level7DistractionManager.Instance.IsDistractionActive)
+            {
+                Level7DistractionManager.Instance.DismissDistraction(false);
+                return;
+            }
+
+            if (activeAnimRoutine != null)
+            {
+                StopCoroutine(activeAnimRoutine);
+                activeAnimRoutine = null;
+            }
+
+            SnapHidden();
+            if (gameObject.activeSelf)
             {
                 gameObject.SetActive(false);
             }
-            activeAnimRoutine = null;
+        }
+
+        public void TriggerTimeoutExpired(DistractionEventData data)
+        {
+            TimeoutExpired?.Invoke(data);
+        }
+
+        private void HandleActionClicked()
+        {
+            if (!isVisible) return;
+            ActionClicked?.Invoke(currentData);
+        }
+
+        private void HandleIgnoreClicked()
+        {
+            if (!isVisible) return;
+            IgnoreClicked?.Invoke(currentData);
         }
     }
 }

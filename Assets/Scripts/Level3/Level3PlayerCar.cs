@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using TrafficTown2D.Core;
+using TrafficTown2D.Player;
 
 namespace TrafficTown2D.Level3
 {
@@ -85,6 +86,13 @@ namespace TrafficTown2D.Level3
             if (rb != null) rb.linearVelocity = Vector2.zero;
         }
 
+        [Header("Indicators & Signals")]
+        [SerializeField] private CarIndicatorController indicatorController;
+        public CarIndicatorController IndicatorController => indicatorController;
+        public bool LeftSignalActive => indicatorController != null && indicatorController.LeftSignalActive;
+        public bool RightSignalActive => indicatorController != null && indicatorController.RightSignalActive;
+        public event Action<int> TurnSignalChanged;
+
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
@@ -94,6 +102,33 @@ namespace TrafficTown2D.Level3
                 rb.gravityScale = 0f;
                 rb.freezeRotation = true;
             }
+
+            if (indicatorController == null) indicatorController = GetComponent<CarIndicatorController>();
+            if (indicatorController == null) indicatorController = gameObject.AddComponent<CarIndicatorController>();
+            if (indicatorController != null)
+            {
+                indicatorController.TurnSignalChanged += OnIndicatorTurnSignalChanged;
+            }
+
+            RoadBoundaryKeeper.AttachActivePlayerCar(gameObject);
+        }
+
+        private void OnDestroy()
+        {
+            if (indicatorController != null)
+            {
+                indicatorController.TurnSignalChanged -= OnIndicatorTurnSignalChanged;
+            }
+        }
+
+        private void OnIndicatorTurnSignalChanged(int signal)
+        {
+            TurnSignalChanged?.Invoke(signal);
+        }
+
+        public void CancelSignals()
+        {
+            if (indicatorController != null) indicatorController.CancelSignals();
         }
 
         private void Start()

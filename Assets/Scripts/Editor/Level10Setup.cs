@@ -78,10 +78,25 @@ namespace TrafficTown2D.Editor
             // Extended background for longer road
             LevelSetupHelpers.CreateSprite(parent, "Ground", new Vector3(2f, 0f, 5f), new Vector3(30f, 14f, 1f), new Color(0.82f, 0.90f, 0.85f, 1f), -10, false);
 
-            // Long road
+            // Long road & Physical Curb Colliders
             LevelSetupHelpers.CreateSprite(parent, "RoadBase", new Vector3(2f, 0f, 0f), new Vector3(30f, 4.4f, 1f), new Color(0.10f, 0.11f, 0.13f, 1f), 0, false);
-            LevelSetupHelpers.CreateSprite(parent, "TopEdge", new Vector3(2f, 2.15f, -0.01f), new Vector3(30f, 0.1f, 1f), new Color(0.92f, 0.88f, 0.62f, 1f), 1, false);
-            LevelSetupHelpers.CreateSprite(parent, "BottomEdge", new Vector3(2f, -2.15f, -0.01f), new Vector3(30f, 0.1f, 1f), new Color(0.92f, 0.88f, 0.62f, 1f), 1, false);
+            GameObject topEdge = LevelSetupHelpers.CreateSprite(parent, "TopEdge", new Vector3(2f, 2.15f, -0.01f), new Vector3(30f, 0.1f, 1f), new Color(0.92f, 0.88f, 0.62f, 1f), 1, false);
+            BoxCollider2D tCol = LevelSetupHelpers.GetOrAdd<BoxCollider2D>(topEdge);
+            tCol.size = new Vector2(30f, 0.35f);
+
+            GameObject bottomEdge = LevelSetupHelpers.CreateSprite(parent, "BottomEdge", new Vector3(2f, -2.15f, -0.01f), new Vector3(30f, 0.1f, 1f), new Color(0.92f, 0.88f, 0.62f, 1f), 1, false);
+            BoxCollider2D bCol = LevelSetupHelpers.GetOrAdd<BoxCollider2D>(bottomEdge);
+            bCol.size = new Vector2(30f, 0.35f);
+
+            GameObject leftWall = LevelSetupHelpers.FindOrCreateChild(parent, "LeftWall");
+            leftWall.transform.position = new Vector3(-13.5f, 0f, 0f);
+            BoxCollider2D lwCol = LevelSetupHelpers.GetOrAdd<BoxCollider2D>(leftWall);
+            lwCol.size = new Vector2(0.5f, 5.0f);
+
+            GameObject rightWall = LevelSetupHelpers.FindOrCreateChild(parent, "RightWall");
+            rightWall.transform.position = new Vector3(17.5f, 0f, 0f);
+            BoxCollider2D rwCol = LevelSetupHelpers.GetOrAdd<BoxCollider2D>(rightWall);
+            rwCol.size = new Vector2(0.5f, 5.0f);
 
             for (float x = -12f; x <= 16f; x += 1.2f)
                 LevelSetupHelpers.CreateSprite(parent, "Dash_" + x.ToString("F1"), new Vector3(x, 0f, -0.01f), new Vector3(0.7f, 0.08f, 1f), new Color(1f, 0.94f, 0.45f, 1f), 1, false);

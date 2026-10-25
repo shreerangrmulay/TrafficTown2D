@@ -11,6 +11,7 @@ using UnityEngine.Rendering.Universal;
 using TMPro;
 using TrafficTown2D.Core;
 using TrafficTown2D.Level3;
+using TrafficTown2D.Player;
 using TrafficTown2D.UI;
 
 namespace TrafficTown2D.Editor
@@ -204,9 +205,24 @@ namespace TrafficTown2D.Editor
             CreateWorldSprite(world, "LeftSidewalk", new Vector3(-4.3f, 85f, 0f), new Vector3(2.4f, 210f, 1f), TrafficTownTheme.SidewalkColor, -12);
             CreateWorldSprite(world, "RightSidewalk", new Vector3(4.3f, 85f, 0f), new Vector3(2.4f, 210f, 1f), TrafficTownTheme.SidewalkColor, -12);
 
-            // 4. Road Edge Curbs (White / Light Slate borders)
-            CreateWorldSprite(world, "LeftCurb", new Vector3(-3.1f, 85f, 0f), new Vector3(0.18f, 210f, 1f), TrafficTownTheme.SidewalkCurbColor, -9);
-            CreateWorldSprite(world, "RightCurb", new Vector3(3.1f, 85f, 0f), new Vector3(0.18f, 210f, 1f), TrafficTownTheme.SidewalkCurbColor, -9);
+            // 4. Road Edge Curbs (White / Light Slate borders with solid physical containment colliders)
+            GameObject leftCurb = CreateWorldSprite(world, "LeftCurb", new Vector3(-3.1f, 85f, 0f), new Vector3(0.18f, 210f, 1f), TrafficTownTheme.SidewalkCurbColor, -9);
+            BoxCollider2D lCol = leftCurb.AddComponent<BoxCollider2D>();
+            lCol.size = new Vector2(0.35f, 210f);
+
+            GameObject rightCurb = CreateWorldSprite(world, "RightCurb", new Vector3(3.1f, 85f, 0f), new Vector3(0.18f, 210f, 1f), TrafficTownTheme.SidewalkCurbColor, -9);
+            BoxCollider2D rCol = rightCurb.AddComponent<BoxCollider2D>();
+            rCol.size = new Vector2(0.35f, 210f);
+
+            GameObject bottomWall = FindOrCreateChild(world, "BottomBoundaryWall");
+            bottomWall.transform.position = new Vector3(0f, -20.5f, 0f);
+            BoxCollider2D bCol = GetOrAdd<BoxCollider2D>(bottomWall);
+            bCol.size = new Vector2(10f, 1f);
+
+            GameObject topWall = FindOrCreateChild(world, "TopBoundaryWall");
+            topWall.transform.position = new Vector3(0f, 190.5f, 0f);
+            BoxCollider2D tCol = GetOrAdd<BoxCollider2D>(topWall);
+            tCol.size = new Vector2(10f, 1f);
 
             // 5. Dashed Center Line (Yellow)
             GameObject centerLines = FindOrCreateChild(world, "CenterDashedLines");
@@ -318,6 +334,8 @@ namespace TrafficTown2D.Editor
             SpriteRenderer blLeft = CreateLightRenderer(car.transform, "BrakeLight_L", new Vector3(-0.65f, -1.6f, -0.02f), circleSprite);
             SpriteRenderer blRight = CreateLightRenderer(car.transform, "BrakeLight_R", new Vector3(0.65f, -1.6f, -0.02f), circleSprite);
             SetObjectArray(playerCar, "brakeLights", new[] { blLeft, blRight });
+
+            GetOrAdd<CarIndicatorController>(car);
 
             return car;
         }

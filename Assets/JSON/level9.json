@@ -1,41 +1,71 @@
 {
   "levelId": "level9",
-  "levelName": "Roundabouts",
+  "levelName": "Roundabout Rules",
   "difficulty": "hard",
-  "objective": "Enter, navigate, and exit a multi-lane roundabout safely.",
+  "objective": "Slow Down. Give Way. Choose Your Exit. Master three interconnected roundabouts.",
   "initialScore": 100,
   "trafficLight": { "redSeconds": 0, "yellowSeconds": 0, "greenSeconds": 0 },
   "vehicleSpawnInterval": 3,
-  "vehicleSpeed": 2.0,
+  "vehicleSpeed": 2.5,
   "rewards": {
     "waitForWalk": 0,
     "useCrossing": 0,
     "reachSidewalk": 0,
     "unsafeCrossing": 0,
-    "vehicleCollision": -50
+    "vehicleCollision": -25
   },
   "missions": [
     {
-      "missionId": "yield_roundabout",
-      "description": "Yield to traffic already in the roundabout before entering.",
+      "missionId": "roundabout_basics",
+      "description": "Approach Roundabout 1, reduce speed, yield to circulating traffic, and take the 1st exit East.",
       "trafficRule": {
         "ruleId": "roundabout_yield",
-        "title": "Yield in Roundabouts",
-        "description": "Vehicles inside the roundabout have the right of way. Yield before entering."
+        "title": "Yield to Right",
+        "description": "Vehicles circulating inside have right of way. Slow down and yield at the give-way line."
       },
-      "reward": 15
+      "reward": 20
     },
     {
-      "missionId": "signal_exit",
-      "description": "Use your turn signal before exiting the roundabout.",
+      "missionId": "busy_traffic_merge",
+      "description": "Drive to Roundabout 2, observe busy circulating traffic, wait for a safe gap, and merge smoothly.",
       "trafficRule": {
-        "ruleId": "roundabout_exit",
-        "title": "Signal Your Exit",
-        "description": "Always indicate your intention to exit the roundabout to inform other drivers."
+        "ruleId": "gap_selection",
+        "title": "Safe Gap Selection",
+        "description": "Never cut in front of circulating traffic. Wait for an opening before entering."
       },
-      "reward": 15
+      "reward": 20
+    },
+    {
+      "missionId": "pedestrian_priority",
+      "description": "Navigate Roundabout 2 towards the North exit and stop to let pedestrians safely cross the zebra crossing.",
+      "trafficRule": {
+        "ruleId": "pedestrian_priority_exit",
+        "title": "Yield to Pedestrians",
+        "description": "Always yield to pedestrians crossing exit and entry arms at roundabouts."
+      },
+      "reward": 20
+    },
+    {
+      "missionId": "choose_your_exit",
+      "description": "Approach Roundabout 3, follow directional guidance, and take the 3rd exit towards Town Center.",
+      "trafficRule": {
+        "ruleId": "lane_and_exit_selection",
+        "title": "Choose Correct Exit",
+        "description": "Plan your route early, stay in your lane, and prepare your turn signal before exiting."
+      },
+      "reward": 20
+    },
+    {
+      "missionId": "roundabout_master",
+      "description": "Signal your exit, pass the final crossing cleanly, and reach the Town Center finish line.",
+      "trafficRule": {
+        "ruleId": "exit_signal_mastery",
+        "title": "Signal to Exit",
+        "description": "Indicate your intention before exiting the roundabout to inform other road users."
+      },
+      "reward": 25
     }
   ],
-  "roundaboutLanes": 2,
+  "roundaboutCount": 3,
   "turnSignalRequired": true
 }

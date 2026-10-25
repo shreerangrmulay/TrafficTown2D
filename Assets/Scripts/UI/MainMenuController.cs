@@ -1,19 +1,28 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TrafficTown2D.Core;
-using System;
 
 namespace TrafficTown2D.UI
 {
+    /// <summary>
+    /// Coordinates high-level Main Menu actions and seamless toggling between
+    /// the Main Menu buttons and the Winding Road Level Select map.
+    /// Preserves all existing level loading signatures and save data integrations.
+    /// </summary>
     public sealed class MainMenuController : MonoBehaviour
     {
         public static event Action ExitRequested;
 
+        [Header("Dependencies")]
         [SerializeField] private SceneLoader sceneLoader;
         [SerializeField] private Text messageText;
         [SerializeField] private TMPro.TMP_Text messageTextTmp;
+
+        [Header("UI Panels")]
         [SerializeField] private GameObject levelSelectPanel;
         [SerializeField] private GameObject mainMenuContent;
+        [SerializeField] private LevelMapController levelMapController;
 
         private void Awake()
         {
@@ -23,6 +32,31 @@ namespace TrafficTown2D.UI
                 Debug.LogWarning($"[MainMenuController] Found in non-MainMenu scene '{activeScene}'! Destroying menu object.");
                 Destroy(gameObject);
                 return;
+            }
+
+            MainMenuBootstrap.ConfigureRuntimeMenu();
+            ResolvePanelReferences();
+        }
+
+        private void ResolvePanelReferences()
+        {
+            if (levelSelectPanel == null)
+            {
+                Transform p = transform.Find("LevelSelectPanel");
+                if (p == null && transform.parent != null) p = transform.parent.Find("LevelSelectPanel");
+                if (p != null) levelSelectPanel = p.gameObject;
+            }
+
+            if (mainMenuContent == null)
+            {
+                Transform c = transform.Find("MainMenuContent");
+                if (c == null && transform.parent != null) c = transform.parent.Find("MainMenuContent");
+                if (c != null) mainMenuContent = c.gameObject;
+            }
+
+            if (levelMapController == null && levelSelectPanel != null)
+            {
+                levelMapController = levelSelectPanel.GetComponentInChildren<LevelMapController>(true);
             }
         }
 
@@ -44,6 +78,15 @@ namespace TrafficTown2D.UI
         }
 
         public void PlayLevel1() => PlayLevel(1);
+        public void PlayLevel2() => PlayLevel(2);
+        public void PlayLevel3() => PlayLevel(3);
+        public void PlayLevel4() => PlayLevel(4);
+        public void PlayLevel5() => PlayLevel(5);
+        public void PlayLevel6() => PlayLevel(6);
+        public void PlayLevel7() => PlayLevel(7);
+        public void PlayLevel8() => PlayLevel(8);
+        public void PlayLevel9() => PlayLevel(9);
+        public void PlayLevel10() => PlayLevel(10);
 
         public void PlayLevel(int levelNumber)
         {
@@ -68,16 +111,6 @@ namespace TrafficTown2D.UI
                 UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
             }
         }
-
-        public void PlayLevel2() => PlayLevel(2);
-        public void PlayLevel3() => PlayLevel(3);
-        public void PlayLevel4() => PlayLevel(4);
-        public void PlayLevel5() => PlayLevel(5);
-        public void PlayLevel6() => PlayLevel(6);
-        public void PlayLevel7() => PlayLevel(7);
-        public void PlayLevel8() => PlayLevel(8);
-        public void PlayLevel9() => PlayLevel(9);
-        public void PlayLevel10() => PlayLevel(10);
 
         public void Learn()
         {
@@ -106,6 +139,9 @@ namespace TrafficTown2D.UI
 
         public void OpenLevelSelect()
         {
+            MainMenuBootstrap.ConfigureRuntimeMenu();
+            ResolvePanelReferences();
+
             if (mainMenuContent != null)
             {
                 mainMenuContent.SetActive(false);
@@ -115,6 +151,11 @@ namespace TrafficTown2D.UI
             {
                 levelSelectPanel.SetActive(true);
                 levelSelectPanel.transform.SetAsLastSibling();
+
+                if (levelMapController != null)
+                {
+                    levelMapController.RefreshMap();
+                }
             }
         }
 
@@ -154,11 +195,6 @@ namespace TrafficTown2D.UI
             }
         }
 
-        /// <summary>
-        /// Destroys the Canvas root GameObject so the main-menu UI does not persist
-        /// into level scenes. The GameManager / SceneLoader singletons on their own
-        /// separate GameObjects survive via DontDestroyOnLoad as intended.
-        /// </summary>
         private void DestroyMenuCanvas()
         {
             Canvas canvas = GetComponentInParent<Canvas>();
@@ -168,9 +204,8 @@ namespace TrafficTown2D.UI
             }
             else
             {
-                // Fallback: destroy this controller's root
                 Destroy(gameObject);
             }
         }
     }
-}
+}
